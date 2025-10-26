@@ -1,1 +1,3981 @@
-# spacevenusia.github.io
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Invader - Édition Multicolore</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1e1b4b, #581c87, #000);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            cursor: default;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .status-bar {
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 15px;
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 2px solid transparent;
+            background-clip: padding-box;
+            position: relative;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+
+        .status-bar::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #ff6b9d, #feca57, #4ecdc4, #9b59b6);
+            border-radius: 17px;
+            z-index: -1;
+            animation: borderGlow 3s linear infinite;
+        }
+
+        @keyframes borderGlow {
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(360deg); }
+        }
+
+        .coins-display {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #fbbf24;
+        }
+
+        .coins-display i {
+            font-size: 1.8rem;
+        }
+
+        .enemies-count {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #fff;
+        }
+
+        .enemies-count i {
+            font-size: 1.5rem;
+            color: #ef4444;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .control-btn {
+            padding: 8px 15px;
+            background: linear-gradient(45deg, #8b5cf6, #6366f1);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(139, 92, 246, 0.3);
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(139, 92, 246, 0.5);
+        }
+
+        .game-area {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .game-field {
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            padding: 20px;
+            min-height: 500px;
+            border: 2px solid transparent;
+            background-clip: padding-box;
+            position: relative;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+
+        .game-field::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #4ecdc4, #1e90ff, #ff6b9d);
+            border-radius: 17px;
+            z-index: -1;
+            animation: borderGlow 4s linear infinite;
+        }
+
+        .enemies-area {
+            position: relative;
+            width: 100%;
+            height: 350px;
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            background: rgba(30, 27, 75, 0.3);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .enemy {
+            position: absolute;
+            transition: all 0.3s;
+        }
+
+        .enemy-icon {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+            transition: transform 0.3s;
+            filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
+        }
+
+        .health-bar {
+            width: 4rem;
+            height: 0.5rem;
+            background: #4b5563;
+            border-radius: 0.25rem;
+            margin-top: 0.25rem;
+            overflow: hidden;
+        }
+
+        .health-fill {
+            height: 100%;
+            background: #10b981;
+            border-radius: 0.25rem;
+            transition: width 0.3s;
+        }
+
+        .boss {
+            position: absolute;
+            transition: all 0.3s;
+            z-index: 5;
+        }
+
+        .boss-icon {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            animation: bounce 2s infinite;
+            filter: drop-shadow(0 0 10px rgba(255, 0, 0, 0.7));
+        }
+
+        .boss-health-bar {
+            width: 8rem;
+            height: 1rem;
+            background: #4b5563;
+            border-radius: 0.5rem;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+
+        .boss-health-fill {
+            height: 100%;
+            background: #ef4444;
+            border-radius: 0.5rem;
+            transition: width 0.3s;
+        }
+
+        .player-ship {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: all 0.1s ease-out;
+            z-index: 10;
+            cursor: move;
+        }
+
+        .ship-icon {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            transition: transform 0.3s;
+            filter: drop-shadow(0 0 10px rgba(0, 150, 255, 0.8));
+        }
+
+        .target-indicator {
+            position: absolute;
+            top: -1rem;
+            left: -1rem;
+            color: #ef4444;
+            animation: pulse 1s infinite;
+        }
+
+        .attack-queue-bar {
+            background: rgba(0, 0, 0, 0.9);
+            border-radius: 10px;
+            padding: 12px 20px;
+            margin-bottom: 15px;
+            border: 2px solid rgba(220, 38, 38, 0.7);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .attack-queue-bar::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #dc2626, #ea580c, #dc2626);
+            border-radius: 12px;
+            z-index: -1;
+            animation: borderGlow 2s linear infinite;
+        }
+
+        .queue-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .queue-count {
+            background: #dc2626;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 1.2rem;
+            min-width: 50px;
+            text-align: center;
+            box-shadow: 0 0 10px rgba(220, 38, 38, 0.7);
+        }
+
+        .current-attacker {
+            color: #fbbf24;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-align: center;
+            flex-grow: 1;
+            text-shadow: 0 0 10px rgba(251, 191, 36, 0.7);
+            animation: attackerPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes attackerPulse {
+            0%, 100% { 
+                transform: scale(1);
+                text-shadow: 0 0 10px rgba(251, 191, 36, 0.7);
+            }
+            50% { 
+                transform: scale(1.15);
+                text-shadow: 0 0 20px rgba(251, 191, 36, 1), 0 0 30px rgba(251, 191, 36, 0.5);
+            }
+        }
+
+        .queue-speed {
+            color: #4ecdc4;
+            font-size: 0.9rem;
+        }
+
+        .spin-container {
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 15px;
+            padding: 15px;
+            border: 2px solid transparent;
+            background-clip: padding-box;
+            position: relative;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            margin-top: 10px;
+        }
+
+        .spin-container::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #f59e0b, #f97316, #fbbf24);
+            border-radius: 17px;
+            z-index: -1;
+            animation: borderGlow 3.5s linear infinite;
+        }
+
+        .spin-header {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #fbbf24;
+            text-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+            display: none;
+        }
+
+        .symbols-container {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 10px 0;
+            perspective: 1000px;
+            flex-wrap: wrap;
+        }
+
+        .symbol-wheel {
+            width: 60px;
+            height: 80px;
+            background: linear-gradient(145deg, #2c3e50, #34495e);
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #feca57;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5), 0 5px 15px rgba(0, 0, 0, 0.3);
+            border: 2px solid #feca57;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .symbol-wheel.winning {
+            animation: winPulse 0.5s ease-in-out 3;
+            background: linear-gradient(145deg, #ffd700, #ffed4e);
+            color: #000;
+            border-color: #ffd700;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+        }
+
+        @keyframes winPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+
+        .symbol-image {
+            width: 45px;
+            height: 45px;
+            object-fit: contain;
+            filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
+        }
+
+        .spin-rewards-display {
+            text-align: center;
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            display: none;
+        }
+
+        .spin-rewards-title {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #3b82f6;
+            margin-bottom: 5px;
+        }
+
+        .spin-rewards-amount {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: white;
+        }
+
+        .pity-counter {
+            text-align: center;
+            margin-top: 8px;
+            font-size: 0.9em;
+            color: #fbbf24;
+        }
+
+        .attack-controls {
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+            border: 2px solid transparent;
+            background-clip: padding-box;
+            position: relative;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+
+        .attack-controls::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #ec4899, #8b5cf6, #3730a3);
+            border-radius: 17px;
+            z-index: -1;
+            animation: borderGlow 3s linear infinite;
+        }
+
+        .attack-modes {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .attack-mode {
+            position: relative;
+            padding: 15px 20px;
+            background: linear-gradient(to bottom right, #ec4899, #8b5cf6, #3730a3);
+            color: white;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 12px;
+            transition: all 0.3s;
+            transform: scale(1);
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 20px rgba(236, 72, 153, 0.4);
+            cursor: pointer;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .attack-mode:hover {
+            transform: scale(1.05);
+        }
+
+        .attack-mode.active {
+            border-color: white;
+            transform: scale(1.1);
+            box-shadow: 0 0 25px rgba(236, 72, 153, 0.8);
+        }
+
+        .mode-badge {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: linear-gradient(to right, #fbbf24, #f59e0b);
+            color: black;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+            border: 2px solid white;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .mode-icon {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+            filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
+            margin-bottom: 5px;
+        }
+
+        .mode-label {
+            font-size: 0.9rem;
+        }
+
+        .shoot-button {
+            padding: 15px 40px;
+            background: linear-gradient(to right, #dc2626, #ea580c);
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            transform: scale(1);
+            box-shadow: 0 8px 20px rgba(220, 38, 38, 0.4);
+            position: relative;
+            display: block;
+            margin: 0 auto;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .shoot-button:hover {
+            background: linear-gradient(to right, #b91c1c, #c2410c);
+            transform: scale(1.05);
+        }
+
+        .shoot-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: scale(1);
+        }
+
+        .attack-queue-badge {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: #3b82f6;
+            color: white;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.8rem;
+            border: 2px solid white;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .auto-target-hint {
+            text-align: center;
+            color: #c4b5fd;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            display: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes enemyZoom {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        .shooting {
+            animation: pulse 0.2s;
+        }
+
+        .targeted {
+            transform: scale(1.25);
+        }
+
+        .boss-targeted {
+            transform: scale(1.1);
+        }
+
+        .enemy-zooming {
+            animation: enemyZoom 1s infinite;
+        }
+
+        .ship-moving {
+            animation: shipMove 3s ease-in-out infinite;
+        }
+
+        @keyframes shipMove {
+            0%, 100% { transform: translateX(-50%) scale(1); }
+            25% { transform: translateX(calc(-50% - 15px)) scale(1.1); }
+            50% { transform: translateX(-50%) scale(1); }
+            75% { transform: translateX(calc(-50% + 15px)) scale(0.9); }
+        }
+
+        .projectile {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            z-index: 10;
+            pointer-events: none;
+            border-radius: 50%;
+            background: radial-gradient(circle, #ff4444 0%, #ff0000 70%);
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.8);
+        }
+
+        .explosion {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            pointer-events: none;
+            z-index: 20;
+            border-radius: 50%;
+            background: radial-gradient(circle, #ff4444 0%, #ff0000 50%, transparent 70%);
+            animation: explosion 0.6s ease-out forwards;
+        }
+
+        @keyframes explosion {
+            0% { transform: scale(0.5); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+
+        .winners-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 280px;
+            max-height: 400px;
+            background: rgba(0, 0, 0, 0.9);
+            border-radius: 15px;
+            border: 2px solid rgba(255, 215, 0, 0.5);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+            overflow: hidden;
+            z-index: 1000;
+        }
+
+        .winners-header {
+            background: linear-gradient(45deg, #ffd700, #ffa500);
+            color: #000;
+            padding: 12px;
+            font-weight: bold;
+            font-size: 1.1em;
+            text-align: center;
+            cursor: move;
+        }
+
+        .winners-list {
+            max-height: 340px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .winner-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 10px;
+            border-left: 4px solid #ffd700;
+        }
+
+        .winner-name {
+            color: #ffd700;
+            font-weight: bold;
+            font-size: 1em;
+            margin-bottom: 4px;
+        }
+
+        .winner-reward {
+            color: #fff;
+            font-size: 0.9em;
+        }
+
+        .winner-time {
+            color: #9ca3af;
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+        }
+
+        .tikfinity-connection {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 15px;
+            border: 2px solid rgba(255, 105, 180, 0.6);
+            backdrop-filter: blur(10px);
+            margin: 20px auto;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .status-dot.connected {
+            background: #4CAF50;
+            box-shadow: 0 0 10px #4CAF50;
+        }
+
+        .status-dot.disconnected {
+            background: #F44336;
+            box-shadow: 0 0 10px #F44336;
+        }
+
+        .status-dot.connecting {
+            background: #FF9800;
+            box-shadow: 0 0 10px #FF9800;
+            animation: pulse 1.5s infinite;
+        }
+
+        .connect-btn {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            border-radius: 20px;
+            background: linear-gradient(45deg, #ff6b9d, #c44569);
+            color: #fff;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .connect-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+        }
+
+        .connect-btn:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .connection-info {
+            font-size: 12px;
+            color: #feca57;
+            margin-top: 10px;
+            line-height: 1.4;
+        }
+
+        .monsters-panel {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: 280px;
+            background: rgba(0, 0, 0, 0.9);
+            border-radius: 15px;
+            border: 2px solid rgba(139, 92, 246, 0.7);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+            overflow: hidden;
+            z-index: 1000;
+        }
+
+        .monsters-header {
+            background: linear-gradient(45deg, #8b5cf6, #6366f1);
+            color: white;
+            padding: 12px;
+            font-weight: bold;
+            font-size: 1.1em;
+            text-align: center;
+            cursor: move;
+        }
+
+        .monsters-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .monster-item {
+            background: rgba(139, 92, 246, 0.2);
+            border: 2px solid #8b5cf6;
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .monster-item:hover {
+            background: rgba(139, 92, 246, 0.4);
+            transform: scale(1.05);
+        }
+
+        .monster-mini-icon {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+            margin-bottom: 5px;
+        }
+
+        .monster-info {
+            font-size: 0.8rem;
+            color: #c4b5fd;
+        }
+
+        .contributors-panel {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 320px;
+            max-height: 500px;
+            background: rgba(0, 0, 0, 0.9);
+            border-radius: 15px;
+            border: 2px solid rgba(59, 130, 246, 0.7);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+            overflow: hidden;
+            z-index: 1000;
+        }
+
+        .contributors-header {
+            background: linear-gradient(45deg, #3b82f6, #1e40af);
+            color: white;
+            padding: 12px;
+            font-weight: bold;
+            font-size: 1.1em;
+            text-align: center;
+            cursor: move;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .contributors-list {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .contributor-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 10px;
+            border-left: 4px solid #3b82f6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .contributor-name {
+            color: #93c5fd;
+            font-weight: bold;
+            font-size: 1em;
+        }
+
+        .contributor-coins {
+            color: #fbbf24;
+            font-weight: bold;
+            font-size: 1em;
+        }
+
+        .contributor-rank {
+            background: #3b82f6;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .contributor-header {
+            display: flex;
+            align-items: center;
+        }
+
+        .reset-contributors-btn {
+            background: rgba(239, 68, 68, 0.8);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 5px 10px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .reset-contributors-btn:hover {
+            background: rgba(239, 68, 68, 1);
+            transform: scale(1.05);
+        }
+
+        .attack-queue-panel {
+            position: fixed;
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
+            width: 320px;
+            max-height: 500px;
+            background: rgba(0, 0, 0, 0.95);
+            border-radius: 15px;
+            border: 2px solid rgba(59, 130, 246, 0.8);
+            backdrop-filter: blur(15px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8);
+            overflow: hidden;
+            z-index: 1000;
+        }
+
+        .attack-queue-header {
+            background: linear-gradient(45deg, #3b82f6, #1e40af);
+            color: white;
+            padding: 15px;
+            font-weight: bold;
+            font-size: 1.2em;
+            text-align: center;
+            cursor: move;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .attack-queue-list {
+            max-height: 380px;
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        .queue-item {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(30, 64, 175, 0.1));
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 12px;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .queue-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(to bottom, #3b82f6, #1e40af);
+        }
+
+        .queue-item.active {
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(245, 158, 11, 0.15));
+            border-color: rgba(251, 191, 36, 0.5);
+            transform: scale(1.02);
+            box-shadow: 0 5px 15px rgba(251, 191, 36, 0.3);
+        }
+
+        .queue-item.active::before {
+            background: linear-gradient(to bottom, #fbbf24, #f59e0b);
+        }
+
+        .queue-item-info {
+            flex: 1;
+        }
+
+        .queue-item-name {
+            font-weight: bold;
+            color: #93c5fd;
+            font-size: 1em;
+            margin-bottom: 4px;
+        }
+
+        .queue-item.active .queue-item-name {
+            color: #fef3c7;
+        }
+
+        .queue-item-status {
+            font-size: 0.8em;
+            color: #9ca3af;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .queue-item.active .queue-item-status {
+            color: #fef3c7;
+            font-weight: bold;
+        }
+
+        .queue-item-attacks {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1.1em;
+            min-width: 50px;
+            text-align: center;
+            border: 2px solid rgba(59, 130, 246, 0.5);
+        }
+
+        .queue-item.active .queue-item-attacks {
+            background: rgba(251, 191, 36, 0.2);
+            color: #fef3c7;
+            border-color: rgba(251, 191, 36, 0.5);
+        }
+
+        .queue-empty {
+            text-align: center;
+            padding: 30px 20px;
+            color: #9ca3af;
+            font-style: italic;
+        }
+
+        .queue-total {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 12px 15px;
+            text-align: center;
+            font-weight: bold;
+            color: #fbbf24;
+            border-top: 2px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .queue-progress {
+            width: 100%;
+            height: 4px;
+            background: rgba(59, 130, 246, 0.2);
+            border-radius: 2px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .queue-progress-fill {
+            height: 100%;
+            background: linear-gradient(to right, #3b82f6, #60a5fa);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        .queue-item.active .queue-progress-fill {
+            background: linear-gradient(to right, #fbbf24, #fcd34d);
+        }
+
+        .audio-controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 280px;
+            background: rgba(0, 0, 0, 0.9);
+            border-radius: 15px;
+            border: 2px solid rgba(16, 185, 129, 0.7);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+            overflow: hidden;
+            z-index: 1000;
+        }
+
+        .audio-header {
+            background: linear-gradient(45deg, #10b981, #059669);
+            color: white;
+            padding: 12px;
+            font-weight: bold;
+            font-size: 1.1em;
+            text-align: center;
+            cursor: move;
+        }
+
+        .volume-control {
+            padding: 15px;
+        }
+
+        .volume-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            color: #10b981;
+            font-weight: bold;
+        }
+
+        .volume-slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: #374151;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #10b981;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .audio-toggle-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(45deg, #10b981, #059669);
+            color: white;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .audio-toggle-btn:hover {
+            background: linear-gradient(45deg, #059669, #047857);
+        }
+
+        .audio-toggle-btn.muted {
+            background: linear-gradient(45deg, #6b7280, #4b5563);
+        }
+
+        .library-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            background: rgba(0, 0, 0, 0.95);
+            border-radius: 15px;
+            border: 2px solid rgba(139, 92, 246, 0.8);
+            backdrop-filter: blur(15px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8);
+            overflow: hidden;
+            z-index: 10000;
+            display: none;
+        }
+
+        .library-header {
+            background: linear-gradient(45deg, #8b5cf6, #6366f1);
+            color: white;
+            padding: 15px 20px;
+            font-weight: bold;
+            font-size: 1.2em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: move;
+        }
+
+        .library-close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2em;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: background 0.3s;
+        }
+
+        .library-close-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .library-content {
+            padding: 20px;
+            max-height: calc(80vh - 60px);
+            overflow-y: auto;
+        }
+
+        .library-section {
+            margin-bottom: 25px;
+        }
+
+        .library-section h3 {
+            color: #c4b5fd;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .add-monster-form {
+            display: grid;
+            grid-template-columns: 1fr 100px 100px;
+            gap: 10px;
+            align-items: end;
+        }
+
+        .monster-input {
+            padding: 10px;
+            border: 1px solid #4b5563;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 0.9em;
+        }
+
+        .monster-input::placeholder {
+            color: #9ca3af;
+        }
+
+        .add-monster-btn {
+            padding: 10px 15px;
+            background: linear-gradient(45deg, #10b981, #059669);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .add-monster-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
+        }
+
+        .existing-monsters {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .existing-monster-item {
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid #8b5cf6;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .existing-monster-image {
+            width: 60px;
+            height: 60px;
+            object-fit: contain;
+            margin-bottom: 10px;
+            border-radius: 8px;
+        }
+
+        .existing-monster-info {
+            font-size: 0.8em;
+            color: #c4b5fd;
+            margin-bottom: 10px;
+        }
+
+        .monster-actions {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+        }
+
+        .monster-action-btn {
+            padding: 5px 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.7em;
+            transition: all 0.3s;
+        }
+
+        .monster-action-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .monster-action-btn.update-btn {
+            background: rgba(59, 130, 246, 0.3);
+        }
+
+        .monster-action-btn.delete-btn {
+            background: rgba(239, 68, 68, 0.3);
+        }
+
+        .library-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .library-action-btn {
+            padding: 10px 15px;
+            background: linear-gradient(45deg, #3b82f6, #1e40af);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .library-action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .library-action-btn.reset-btn {
+            background: linear-gradient(45deg, #ef4444, #dc2626);
+        }
+
+        .floating-library-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 320px;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(45deg, #8b5cf6, #6366f1);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2em;
+            box-shadow: 0 5px 15px rgba(139, 92, 246, 0.4);
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+
+        .floating-library-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 20px rgba(139, 92, 246, 0.6);
+        }
+
+        .library-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            z-index: 9999;
+            display: none;
+        }
+
+        .special-attacks {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .special-attack-btn {
+            position: relative;
+            padding: 15px 25px;
+            background: linear-gradient(to bottom right, #3b82f6, #1e40af);
+            color: white;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 12px;
+            transition: all 0.3s;
+            transform: scale(1);
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+            cursor: pointer;
+            min-width: 180px;
+            text-align: center;
+        }
+
+        .special-attack-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .special-attack-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: scale(1);
+        }
+
+        .special-attack-icon {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+            filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5));
+            margin-bottom: 8px;
+        }
+
+        .special-attack-label {
+            font-size: 1rem;
+            font-weight: bold;
+        }
+
+        .spawn-monster-btn {
+            background: linear-gradient(to bottom right, #10b981, #059669);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .area-attack-btn {
+            background: linear-gradient(to bottom right, #ef4444, #dc2626);
+            box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+        }
+
+        .remove-monster-btn {
+            background: linear-gradient(to bottom right, #8b5cf6, #6366f1);
+            box-shadow: 0 8px 20px rgba(139, 92, 246, 0.4);
+        }
+
+        .attack-controls-grid {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 20px;
+            align-items: start;
+        }
+
+        .attack-modes-special {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .attack-modes-row {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .special-attacks-column {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .status-bar {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .attack-modes {
+                gap: 10px;
+            }
+            
+            .attack-mode {
+                min-width: 100px;
+                padding: 12px 15px;
+            }
+            
+            .symbol-wheel {
+                width: 50px;
+                height: 70px;
+            }
+            
+            .symbol-image {
+                width: 35px;
+                height: 35px;
+            }
+            
+            .winners-panel, .monsters-panel, .contributors-panel, .attack-queue-panel, .audio-controls {
+                position: relative;
+                top: auto;
+                right: auto;
+                bottom: auto;
+                left: auto;
+                width: 100%;
+                max-width: 500px;
+                margin: 15px auto;
+                transform: none;
+            }
+
+            .floating-library-btn {
+                position: relative;
+                bottom: auto;
+                right: auto;
+                margin: 10px auto;
+                display: block;
+            }
+
+            .special-attack-btn {
+                min-width: 140px;
+                padding: 10px 15px;
+            }
+
+            .attack-controls-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="status-bar">
+            <div class="coins-display">
+                <i class="fas fa-coins"></i>
+                <span id="coinsCount">0</span> pièces
+            </div>
+            <div class="enemies-count">
+                <i class="fas fa-skull-crossbones"></i>
+                Ennemis: <span id="enemiesCount">27</span>/27
+            </div>
+            <div class="controls">
+                <button class="control-btn" id="newGameButton">
+                    <i class="fas fa-sync-alt"></i> Nouvelle Partie
+                </button>
+                <button class="control-btn" id="refreshImagesButton">
+                    <i class="fas fa-redo-alt"></i> Rafraîchir Images
+                </button>
+                <button class="control-btn" id="changeNameButton">
+                    <i class="fas fa-user-edit"></i> Changer Nom
+                </button>
+            </div>
+        </div>
+
+        <div class="game-area">
+            <div class="game-field">
+                <div class="enemies-area" id="enemiesArea">
+                    <div class="player-ship" id="playerShipContainer">
+                        <img src="https://i.ibb.co/p69ZCLc2/vaisseau.png" alt="Vaisseau" class="ship-icon" id="playerShip">
+                    </div>
+                </div>
+
+                <div class="attack-queue-bar" id="attackQueueBar">
+                    <div class="queue-info">
+                        <i class="fas fa-bullseye"></i>
+                        <span class="queue-speed">Vitesse: <span id="attackSpeed">Rapide</span></span>
+                    </div>
+                    <div class="current-attacker" id="currentAttacker">Prêt à attaquer</div>
+                    <div class="queue-info">
+                        <span class="queue-count" id="queueCount">0</span>
+                    </div>
+                </div>
+
+                <div class="spin-container">
+                    <div class="spin-header">
+                        <i class="fas fa-slot-machine"></i> MACHINE À SYMBOLES
+                    </div>
+                    <div class="symbols-container" id="symbolsContainer"></div>
+                    <div class="spin-rewards-display">
+                        <div class="spin-rewards-title">🎰 GAINS SPIN</div>
+                        <div class="spin-rewards-amount" id="spinRewardsAmount">0</div>
+                    </div>
+                    <div class="pity-counter" id="pityCounter">
+                        Compteur de chance: <span id="pityCount">0</span>/300
+                    </div>
+                </div>
+            </div>
+
+            <div class="attack-controls">
+                <div class="attack-controls-grid">
+                    <div class="attack-modes-special">
+                        <div class="attack-modes-row">
+                            <button class="attack-mode active" id="attackMode1" data-attack-mode="1">
+                                <div class="mode-badge">x1</div>
+                                <div class="mode-content">
+                                    <img src="https://i.ibb.co/93ZwQ7Pn/IMG-6237-Photoroom.png" alt="Rose" class="mode-icon">
+                                    <div class="mode-label">1 coup</div>
+                                </div>
+                            </button>
+                            <button class="attack-mode" id="attackMode10" data-attack-mode="10">
+                                <div class="mode-badge">x1.5</div>
+                                <div class="mode-content">
+                                    <img src="https://i.ibb.co/hxgMcL3s/IMG-6236-Photoroom.png" alt="Rosa" class="mode-icon">
+                                    <div class="mode-label">10 coups</div>
+                                </div>
+                            </button>
+                            <button class="attack-mode" id="attackMode100" data-attack-mode="500">
+                                <div class="mode-badge">x2</div>
+                                <div class="mode-content">
+                                    <img src="https://i.ibb.co/Kc4JWYkB/IMG-6231-Photoroom.png" alt="500" class="mode-icon">
+                                    <div class="mode-label">500 coups</div>
+                                </div>
+                            </button>
+                        </div>
+                        
+                        <button class="shoot-button" id="shootButton">
+                            <i class="fas fa-crosshairs"></i> ATTAQUER (1 coup)
+                            <div class="attack-queue-badge" id="queueBadge" style="display: none;">0</div>
+                        </button>
+                    </div>
+
+                    <div class="special-attacks-column">
+                        <button class="special-attack-btn spawn-monster-btn" id="spawnMonsterBtn" data-action="spawn_monster">
+                            <div class="mode-content">
+                                <img src="https://i.ibb.co/DD3Ppryx/IMG-6223-Photoroom.png" alt="Spawn Monstre" class="special-attack-icon">
+                                <div class="special-attack-label">Spawn Monstre</div>
+                            </div>
+                        </button>
+                        <button class="special-attack-btn area-attack-btn" id="areaAttackBtn" data-action="area_attack">
+                            <div class="mode-content">
+                                <img src="https://i.ibb.co/359Tc6Sc/IMG-6225-Photoroom.png" alt="Attaque Zone" class="special-attack-icon">
+                                <div class="special-attack-label">Attaque Zone (-5 HP)</div>
+                            </div>
+                        </button>
+                        <button class="special-attack-btn remove-monster-btn" id="removeMonsterBtn" data-action="remove_monster">
+                            <div class="mode-content">
+                                <img src="https://i.ibb.co/VcgR1PLQ/IMG-6226-Photoroom.png" alt="Supprimer Monstre" class="special-attack-icon">
+                                <div class="special-attack-label">Supprimer Monstre</div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="auto-target-hint">
+                    Le vaisseau cible automatiquement un ennemi aléatoire à chaque tir!
+                </div>
+            </div>
+        </div>
+
+        <div class="tikfinity-connection">
+            <div class="connection-status">
+                <span class="status-dot disconnected" id="statusDot"></span>
+                <span id="statusText">Déconnecté du serveur</span>
+            </div>
+            <button id="connectBtn" class="connect-btn">Se connecter au serveur</button>
+            <div class="connection-info">
+                💡 Configurez "Space Invader" dans TikFinity → Actions & Events → Third-party action
+            </div>
+        </div>
+    </div>
+
+    <div class="winners-panel" id="winnersPanel">
+        <div class="winners-header">
+            <i class="fas fa-trophy"></i> Tableau des Gagnants
+        </div>
+        <div class="winners-list" id="winnersList">
+            <div class="winner-item">
+                <div class="winner-name">Aucun gagnant</div>
+                <div class="winner-reward">Soyez le premier!</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="monsters-panel" id="monstersPanel">
+        <div class="monsters-header">
+            <i class="fas fa-dragon"></i> Bibliothèque des Monstres
+        </div>
+        <div class="monsters-grid" id="monstersGrid"></div>
+    </div>
+
+    <div class="contributors-panel" id="contributorsPanel">
+        <div class="contributors-header">
+            <span><i class="fas fa-users"></i> Contributeurs</span>
+            <button class="reset-contributors-btn" id="resetContributorsBtn">
+                <i class="fas fa-trash"></i> Reset
+            </button>
+        </div>
+        <div class="contributors-list" id="contributorsList">
+            <div class="contributor-item">
+                <div class="contributor-header">
+                    <div class="contributor-rank">1</div>
+                    <div class="contributor-name">Aucun contributeur</div>
+                </div>
+                <div class="contributor-coins">0 pièces</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="audio-controls" id="audioControls">
+        <div class="audio-header">
+            <i class="fas fa-volume-up"></i>
+            <span>Contrôles Audio</span>
+        </div>
+        <div class="volume-control">
+            <div class="volume-label">
+                <span><i class="fas fa-music"></i> Volume général</span>
+                <span class="volume-value" id="volumeValue">40%</span>
+            </div>
+            <input type="range" min="0" max="100" value="40" class="volume-slider" id="volumeSlider">
+        </div>
+        <button class="audio-toggle-btn" id="audioToggleBtn">
+            <i class="fas fa-volume-up"></i> Son activé
+        </button>
+    </div>
+
+    <div class="attack-queue-panel" id="attackQueuePanel">
+        <div class="attack-queue-header">
+            <i class="fas fa-list-ol"></i>
+            <span>File d'attaque</span>
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="attack-queue-list" id="attackQueueList">
+            <div class="queue-empty">
+                <i class="fas fa-inbox" style="font-size: 2em; margin-bottom: 10px; display: block; opacity: 0.5;"></i>
+                Aucune attaque en attente<br>
+                <small>Cliquez sur ATTAQUER pour commencer!</small>
+            </div>
+        </div>
+        <div class="queue-total" id="queueTotal">Total: 0 attaque(s)</div>
+    </div>
+
+    <div class="library-panel" id="libraryPanel">
+        <div class="library-header">
+            <i class="fas fa-book"></i>
+            <span>Gestion Bibliothèque</span>
+            <button class="library-close-btn" id="libraryCloseBtn">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="library-content">
+            <div class="library-section">
+                <h3>Ajouter un monstre</h3>
+                <div class="add-monster-form">
+                    <input type="url" id="newMonsterImage" placeholder="URL de l'image" class="monster-input">
+                    <input type="number" id="newMonsterHp" placeholder="Points de vie" class="monster-input" value="100">
+                    <input type="number" id="newMonsterReward" placeholder="Récompense" class="monster-input" value="10">
+                    <button class="add-monster-btn" id="addMonsterBtn">
+                        <i class="fas fa-plus"></i> Ajouter
+                    </button>
+                </div>
+            </div>
+            
+            <div class="library-section">
+                <h3>Monstres existants</h3>
+                <div class="existing-monsters" id="existingMonsters">
+                </div>
+            </div>
+            
+            <div class="library-actions">
+                <button class="library-action-btn" id="exportLibraryBtn">
+                    <i class="fas fa-download"></i> Exporter
+                </button>
+                <button class="library-action-btn" id="importLibraryBtn">
+                    <i class="fas fa-upload"></i> Importer
+                </button>
+                <button class="library-action-btn reset-btn" id="resetLibraryBtn">
+                    <i class="fas fa-trash"></i> Réinitialiser
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <button class="floating-library-btn" id="floatingLibraryBtn">
+        <i class="fas fa-book"></i>
+    </button>
+
+    <div class="library-overlay" id="libraryOverlay"></div>
+
+    <script>
+        // ÉTAT DU JEU
+        const gameState = {
+            enemies: [],
+            boss: null,
+            coins: 0,
+            gameStarted: false,
+            targetedEnemy: null,
+            shootAnimation: false,
+            winners: [],
+            playerName: 'Joueur', // Nom par défaut
+            attackMode: 1,
+            attackQueue: 0,
+            isProcessingAttacks: false,
+            projectiles: [],
+            explosions: [],
+            symbols: [],
+            symbolCount: 4,
+            spinRewards: 0,
+            spinCount: 0,
+            pityCounter: 0,
+            tikfinitySocket: null,
+            isTikFinityConnected: false,
+            currentAttacker: 'Joueur',
+            attackSpeed: 'Rapide',
+            attackDelay: 30,
+            contributors: {},
+            isDraggingShip: false,
+            shipOffsetX: 0,
+            shipOffsetY: 0,
+            audioEnabled: true,
+            sounds: {},
+            lastSoundTime: {},
+            masterVolume: 0.4,
+            attackQueueDetailed: [],
+            maxMonsters: 30
+        };
+
+        // CONFIGURATION DES MONSTRES
+        let monstersConfig = [
+            { image: 'https://i.ibb.co/20bnDRgP/IMG-5721.png', hp: 500, reward: 100 },
+            { image: 'https://i.ibb.co/JMPfpWV/IMG-5851.png', hp: 5000, reward: 1000 },
+            { image: 'https://i.ibb.co/hxXnkQh7/IMG-5861.png', hp: 25000, reward: 5000 },
+            { image: 'https://i.ibb.co/kszc1xVw/IMG-5858.png', hp: 50, reward: 10 },
+            { image: 'https://i.ibb.co/7JsBRrCn/IMG-5885.png', hp: 100, reward: 10 },
+            { image: 'https://i.ibb.co/DHBNtX7t/IMG-6573.png', hp: 60000, reward: 10000 },
+            { image: 'https://i.ibb.co/dyvc8C3/IMG-6574.png', hp: 38000, reward: 7000 },
+            { image: 'https://i.ibb.co/DfDvmC8T/IMG-6585.png', hp: 9000, reward: 2000 },
+            { image: 'https://i.ibb.co/2YpQxB1Y/IMG-6620.png', hp: 4000, reward: 800 },
+            { image: 'https://i.ibb.co/TB1mPLkt/IMG-6697.png', hp: 100, reward: 150 },
+            { image: 'https://i.ibb.co/PZWMJzft/IMG-6713.png', hp: 300, reward: 100 },
+            { image: 'https://i.ibb.co/0pM1D3wm/IMG-7123.png', hp: 20000, reward: 3000 },
+            { image: 'https://i.ibb.co/8n9Jczm6/IMG-6061.png', hp: 120, reward: 30 }
+        ];
+
+        let bossConfig = {
+            image: 'https://i.ibb.co/JR5SS5vd/IMG-6570.png',
+            hp: 150000,
+            reward: 29999
+        };
+
+        let miniMonsterConfig = {
+            image: 'https://i.ibb.co/DD3Ppryx/IMG-6223-Photoroom.png',
+            hp: 20,
+            reward: 5
+        };
+
+        const symbolTypes = [
+            { type: 'symbol1', image: 'https://i.ibb.co/DD3Ppryx/IMG-6223-Photoroom.png', name: 'Symbole 1', reward: 5, probability: 0.30 },
+            { type: 'symbol3', image: 'https://i.ibb.co/359Tc6Sc/IMG-6225-Photoroom.png', name: 'Symbole 3', reward: 30, probability: 0.18 },
+            { type: 'symbol4', image: 'https://i.ibb.co/VcgR1PLQ/IMG-6226-Photoroom.png', name: 'Symbole 4', reward: 49, probability: 0.16 },
+            { type: 'symbol5', image: 'https://i.ibb.co/ZRP37JN8/IMG-6224-Photoroom.png', name: 'Symbole 5', reward: 10, probability: 0.14 },
+            { type: 'symbol6', image: 'https://i.ibb.co/Kc4JWYkB/IMG-6231-Photoroom.png', name: 'Symbole 6', reward: 500, probability: 0.12 },
+            { type: 'symbol7', image: 'https://i.ibb.co/vxb20brV/IMG-6229-Photoroom.png', name: 'Symbole 7', reward: 199, probability: 0.05 },
+            { type: 'symbol8', image: 'https://i.ibb.co/sp394pqC/IMG-6228-Photoroom.png', name: 'Symbole 8', reward: 149, probability: 0.03 },
+            { type: 'symbol9', image: 'https://i.ibb.co/PZsTmm2N/IMG-6230-Photoroom.png', name: 'Symbole 9', reward: 300, probability: 0.015 },
+            { type: 'symbol10', image: 'https://i.ibb.co/4nHYFtC4/IMG-6232-Photoroom.png', name: 'Symbole 10', reward: 1088, probability: 0.01 },
+            { type: 'symbol11', image: 'https://i.ibb.co/vCGLSqQ4/IMG-6233-Photoroom.png', name: 'Symbole 11', reward: 3000, probability: 0.005 }
+        ];
+
+        // ÉLÉMENTS DOM
+        const elements = {
+            coinsDisplay: document.getElementById('coinsCount'),
+            enemiesCount: document.getElementById('enemiesCount'),
+            enemiesArea: document.getElementById('enemiesArea'),
+            playerShip: document.getElementById('playerShip'),
+            playerShipContainer: document.getElementById('playerShipContainer'),
+            shootButton: document.getElementById('shootButton'),
+            newGameButton: document.getElementById('newGameButton'),
+            refreshImagesButton: document.getElementById('refreshImagesButton'),
+            changeNameButton: document.getElementById('changeNameButton'),
+            attackMode1: document.getElementById('attackMode1'),
+            attackMode10: document.getElementById('attackMode10'),
+            attackMode100: document.getElementById('attackMode100'),
+            queueBadge: document.getElementById('queueBadge'),
+            symbolsContainer: document.getElementById('symbolsContainer'),
+            spinRewardsAmount: document.getElementById('spinRewardsAmount'),
+            pityCounter: document.getElementById('pityCounter'),
+            pityCount: document.getElementById('pityCount'),
+            statusDot: document.getElementById('statusDot'),
+            statusText: document.getElementById('statusText'),
+            connectBtn: document.getElementById('connectBtn'),
+            winnersPanel: document.getElementById('winnersPanel'),
+            winnersList: document.getElementById('winnersList'),
+            monstersPanel: document.getElementById('monstersPanel'),
+            monstersGrid: document.getElementById('monstersGrid'),
+            attackQueueBar: document.getElementById('attackQueueBar'),
+            currentAttacker: document.getElementById('currentAttacker'),
+            queueCount: document.getElementById('queueCount'),
+            attackSpeed: document.getElementById('attackSpeed'),
+            contributorsPanel: document.getElementById('contributorsPanel'),
+            contributorsList: document.getElementById('contributorsList'),
+            resetContributorsBtn: document.getElementById('resetContributorsBtn'),
+            audioControls: document.getElementById('audioControls'),
+            volumeSlider: document.getElementById('volumeSlider'),
+            volumeValue: document.getElementById('volumeValue'),
+            audioToggleBtn: document.getElementById('audioToggleBtn'),
+            attackQueuePanel: document.getElementById('attackQueuePanel'),
+            attackQueueList: document.getElementById('attackQueueList'),
+            queueTotal: document.getElementById('queueTotal'),
+            spawnMonsterBtn: document.getElementById('spawnMonsterBtn'),
+            areaAttackBtn: document.getElementById('areaAttackBtn'),
+            removeMonsterBtn: document.getElementById('removeMonsterBtn'),
+            libraryPanel: document.getElementById('libraryPanel'),
+            libraryCloseBtn: document.getElementById('libraryCloseBtn'),
+            newMonsterImage: document.getElementById('newMonsterImage'),
+            newMonsterHp: document.getElementById('newMonsterHp'),
+            newMonsterReward: document.getElementById('newMonsterReward'),
+            addMonsterBtn: document.getElementById('addMonsterBtn'),
+            existingMonsters: document.getElementById('existingMonsters'),
+            exportLibraryBtn: document.getElementById('exportLibraryBtn'),
+            importLibraryBtn: document.getElementById('importLibraryBtn'),
+            resetLibraryBtn: document.getElementById('resetLibraryBtn'),
+            floatingLibraryBtn: document.getElementById('floatingLibraryBtn'),
+            libraryOverlay: document.getElementById('libraryOverlay')
+        };
+
+        // ============================================================================
+        // FONCTIONS DE SAUVEGARDE ET CHARGEMENT
+        // ============================================================================
+
+        function saveMonstersLibrary() {
+            const monstersData = {
+                monstersConfig: monstersConfig,
+                bossConfig: bossConfig,
+                miniMonsterConfig: miniMonsterConfig,
+                symbolTypes: symbolTypes,
+                lastUpdate: Date.now()
+            };
+            localStorage.setItem('spaceInvaderMonstersLibrary', JSON.stringify(monstersData));
+            console.log('💾 Bibliothèque des monstres sauvegardée');
+        }
+
+        function loadMonstersLibrary() {
+            const savedLibrary = localStorage.getItem('spaceInvaderMonstersLibrary');
+            
+            if (savedLibrary) {
+                try {
+                    const loadedLibrary = JSON.parse(savedLibrary);
+                    
+                    if (loadedLibrary.monstersConfig && loadedLibrary.monstersConfig.length > 0) {
+                        monstersConfig = loadedLibrary.monstersConfig;
+                    }
+                    
+                    if (loadedLibrary.bossConfig) {
+                        bossConfig = loadedLibrary.bossConfig;
+                    }
+                    
+                    if (loadedLibrary.miniMonsterConfig) {
+                        miniMonsterConfig = loadedLibrary.miniMonsterConfig;
+                    }
+                    
+                    console.log('📂 Bibliothèque des monstres chargée');
+                    return true;
+                } catch (error) {
+                    console.error('❌ Erreur chargement bibliothèque:', error);
+                    return false;
+                }
+            }
+            return false;
+        }
+
+        function saveGameState() {
+            const gameStateToSave = {
+                enemies: gameState.enemies,
+                boss: gameState.boss,
+                coins: gameState.coins,
+                winners: gameState.winners,
+                playerName: gameState.playerName, // Sauvegarder le nom du joueur
+                attackMode: gameState.attackMode,
+                attackQueue: gameState.attackQueue,
+                symbols: gameState.symbols,
+                spinRewards: gameState.spinRewards,
+                spinCount: gameState.spinCount,
+                pityCounter: gameState.pityCounter,
+                contributors: gameState.contributors,
+                audioEnabled: gameState.audioEnabled,
+                masterVolume: gameState.masterVolume,
+                attackQueueDetailed: gameState.attackQueueDetailed,
+                currentAttacker: gameState.currentAttacker,
+                gameStarted: gameState.gameStarted
+            };
+            
+            localStorage.setItem('spaceInvaderGameState', JSON.stringify(gameStateToSave));
+            saveMonstersLibrary();
+            console.log('💾 État du jeu ET bibliothèque sauvegardés');
+        }
+
+        function loadGameState() {
+            const savedState = localStorage.getItem('spaceInvaderGameState');
+            
+            if (savedState) {
+                try {
+                    const loadedState = JSON.parse(savedState);
+                    
+                    gameState.enemies = loadedState.enemies || [];
+                    gameState.boss = loadedState.boss || null;
+                    gameState.coins = loadedState.coins || 0;
+                    gameState.winners = loadedState.winners || [];
+                    gameState.playerName = loadedState.playerName || 'Joueur'; // Charger le nom du joueur
+                    gameState.attackMode = loadedState.attackMode || 1;
+                    gameState.attackQueue = loadedState.attackQueue || 0;
+                    gameState.symbols = loadedState.symbols || [];
+                    gameState.spinRewards = loadedState.spinRewards || 0;
+                    gameState.spinCount = loadedState.spinCount || 0;
+                    gameState.pityCounter = loadedState.pityCounter || 0;
+                    gameState.contributors = loadedState.contributors || {};
+                    gameState.audioEnabled = loadedState.audioEnabled !== undefined ? loadedState.audioEnabled : true;
+                    gameState.masterVolume = loadedState.masterVolume || 0.4;
+                    gameState.attackQueueDetailed = loadedState.attackQueueDetailed || [];
+                    gameState.currentAttacker = loadedState.currentAttacker || gameState.playerName;
+                    gameState.gameStarted = loadedState.gameStarted || false;
+                    
+                    console.log('📂 État du jeu chargé');
+                    return true;
+                } catch (error) {
+                    console.error('❌ Erreur lors du chargement de l\'état du jeu:', error);
+                    return false;
+                }
+            }
+            return false;
+        }
+
+        // ============================================================================
+        // FONCTIONS AUDIO
+        // ============================================================================
+
+        function initAudio() {
+            gameState.sounds = {
+                enemyHit: new Audio('https://files.catbox.moe/ou9kwl.wav'),
+                coin: new Audio('https://files.catbox.moe/pev2v4.wav'),
+                attack10: new Audio('https://files.catbox.moe/ua7cz0.wav'),
+                shoot: new Audio('https://assets.mixkit.co/active_storage/sfx/1681/1681-preview.mp3'),
+                explosion: new Audio('https://assets.mixkit.co/active_storage/sfx/1999/1999-preview.mp3'),
+                spin: new Audio('https://assets.mixkit.co/active_storage/sfx/2000/2000-preview.mp3'),
+                win: new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3'),
+                notification: new Audio('https://assets.mixkit.co/active_storage/sfx/2013/2013-preview.mp3'),
+                buttonClick: new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3')
+            };
+            
+            Object.values(gameState.sounds).forEach(sound => {
+                sound.volume = gameState.masterVolume;
+            });
+            
+            gameState.lastSoundTime = {};
+            
+            if (elements.volumeSlider) {
+                elements.volumeSlider.value = gameState.masterVolume * 100;
+                elements.volumeValue.textContent = Math.round(gameState.masterVolume * 100) + '%';
+            }
+            
+            updateAudioButtonState();
+        }
+
+        function playSound(soundName, minDelay = 0) {
+            if (!gameState.audioEnabled || !gameState.sounds[soundName]) return;
+            
+            const now = Date.now();
+            const lastTime = gameState.lastSoundTime[soundName] || 0;
+            
+            if (now - lastTime < minDelay) {
+                return;
+            }
+            
+            try {
+                const sound = gameState.sounds[soundName].cloneNode();
+                sound.volume = gameState.masterVolume;
+                
+                if (soundName === 'spin' || soundName === 'win' || soundName === 'coin') {
+                    sound.addEventListener('loadedmetadata', () => {
+                        if (sound.duration > 0.5) {
+                            setTimeout(() => {
+                                sound.pause();
+                                sound.currentTime = 0;
+                            }, 500);
+                        }
+                    });
+                }
+                
+                sound.play().catch(e => console.log('Erreur lecture son:', e));
+                gameState.lastSoundTime[soundName] = now;
+            } catch (error) {
+                console.log('Erreur son:', error);
+            }
+        }
+
+        function updateVolume(value) {
+            gameState.masterVolume = value / 100;
+            elements.volumeValue.textContent = value + '%';
+            
+            Object.values(gameState.sounds).forEach(sound => {
+                sound.volume = gameState.masterVolume;
+            });
+            
+            playSound('buttonClick');
+        }
+
+        function toggleAudio() {
+            gameState.audioEnabled = !gameState.audioEnabled;
+            updateAudioButtonState();
+            playSound('buttonClick');
+        }
+
+        function updateAudioButtonState() {
+            if (!elements.audioToggleBtn) return;
+            
+            if (gameState.audioEnabled) {
+                elements.audioToggleBtn.classList.remove('muted');
+                elements.audioToggleBtn.innerHTML = '<i class="fas fa-volume-up"></i> Son activé';
+            } else {
+                elements.audioToggleBtn.classList.add('muted');
+                elements.audioToggleBtn.innerHTML = '<i class="fas fa-volume-mute"></i> Son désactivé';
+            }
+        }
+
+        // ============================================================================
+        // FONCTIONS PRINCIPALES DU JEU
+        // ============================================================================
+
+        function initGame() {
+            initAudio();
+            loadMonstersLibrary();
+            initLibraryPanel();
+            
+            const loaded = loadGameState();
+            
+            if (loaded && gameState.gameStarted) {
+                updateCoinsDisplay();
+                updateEnemiesCount();
+                updateAttackQueueDisplay();
+                renderEnemies();
+                renderBoss();
+                updateWinnersDisplay();
+                updateAttackQueueBar();
+                updateSpinRewardsDisplay();
+                updatePityCounterDisplay();
+                updateDetailedQueueDisplay();
+                updateSymbolsDisplay();
+                updateContributorsDisplay();
+                updateAudioButtonState();
+                
+                showNotification('📂 Partie précédente restaurée!');
+            } else {
+                createNewGame();
+                initSymbols();
+                updateSpinRewardsDisplay();
+                updatePityCounterDisplay();
+                initMonstersPanel();
+                updateContributorsDisplay();
+            }
+            
+            startShipMovement();
+            startEnemyZoomEffect();
+            initShipDragAndDrop();
+            gameState.gameStarted = true;
+            playSound('notification');
+            
+            saveGameState();
+        }
+
+        function createNewGame() {
+            const enemiesAreaRect = elements.enemiesArea.getBoundingClientRect();
+            const areaWidth = enemiesAreaRect.width - 80;
+            const areaHeight = enemiesAreaRect.height - 60;
+            const areaLeft = 0;
+            const areaTop = 0;
+
+            const newEnemies = [];
+            const enemiesPerRow = 7;
+            const enemySpacingX = areaWidth / enemiesPerRow;
+            const enemySpacingY = 80;
+            const startY = 30;
+            
+            let enemyIndex = 0;
+            
+            for (let i = 0; i < monstersConfig.length * 2; i++) {
+                const row = Math.floor(i / enemiesPerRow);
+                const col = i % enemiesPerRow;
+                
+                let monsterConfig;
+                if (i % 2 === 0) {
+                    monsterConfig = monstersConfig[enemyIndex];
+                    enemyIndex++;
+                } else {
+                    monsterConfig = miniMonsterConfig;
+                }
+                
+                const visualDamageRatio = Math.random() * 0.4 + 0.2;
+                
+                newEnemies.push({
+                    id: i,
+                    hp: monsterConfig.hp,
+                    maxHp: monsterConfig.hp,
+                    visualDamageRatio: visualDamageRatio,
+                    reward: monsterConfig.reward,
+                    image: monsterConfig.image,
+                    x: areaLeft + (col * enemySpacingX) + 30,
+                    y: areaTop + startY + (row * enemySpacingY),
+                    alive: true,
+                    isBoss: false
+                });
+            }
+            
+            const boss = {
+                id: 'boss',
+                hp: bossConfig.hp,
+                maxHp: bossConfig.hp,
+                visualDamageRatio: 0.1,
+                reward: bossConfig.reward,
+                image: bossConfig.image,
+                x: areaLeft + (areaWidth / 2) - 40,
+                y: areaTop + areaHeight - 120,
+                alive: true,
+                isBoss: true
+            };
+            
+            gameState.enemies = newEnemies;
+            gameState.boss = boss;
+            gameState.coins = 0;
+            gameState.targetedEnemy = null;
+            gameState.attackQueue = 0;
+            gameState.isProcessingAttacks = false;
+            gameState.projectiles = [];
+            gameState.explosions = [];
+            gameState.winners = [];
+            gameState.spinRewards = 0;
+            gameState.spinCount = 0;
+            gameState.pityCounter = 0;
+            gameState.attackQueueDetailed = [];
+            
+            updateCoinsDisplay();
+            updateEnemiesCount();
+            updateAttackQueueDisplay();
+            renderEnemies();
+            renderBoss();
+            updateWinnersDisplay();
+            updateAttackQueueBar();
+            updateSpinRewardsDisplay();
+            updatePityCounterDisplay();
+            updateDetailedQueueDisplay();
+            
+            elements.playerShipContainer.style.left = '50%';
+            elements.playerShipContainer.style.bottom = '10px';
+            elements.playerShipContainer.style.top = 'auto';
+            elements.playerShipContainer.style.transform = 'translateX(-50%)';
+            
+            saveGameState();
+        }
+
+        // ============================================================================
+        // FONCTIONS DES MONSTRES
+        // ============================================================================
+
+        function initMonstersPanel() {
+            elements.monstersGrid.innerHTML = '';
+            
+            const allMonsters = [
+                ...monstersConfig,
+                bossConfig,
+                miniMonsterConfig
+            ];
+            
+            allMonsters.forEach((monster, index) => {
+                const monsterItem = document.createElement('div');
+                monsterItem.className = 'monster-item';
+                monsterItem.dataset.monsterIndex = index;
+                
+                monsterItem.innerHTML = `
+                    <img src="${monster.image}" alt="Monstre" class="monster-mini-icon" onerror="this.src='https://via.placeholder.com/40/374151/9ca3af?text=?'">
+                    <div class="monster-info">
+                        <div>HP: ${monster.hp.toLocaleString()}</div>
+                        <div>💰: ${monster.reward}</div>
+                    </div>
+                `;
+                
+                monsterItem.addEventListener('click', () => {
+                    spawnMonster(monster);
+                    playSound('buttonClick');
+                });
+                elements.monstersGrid.appendChild(monsterItem);
+            });
+        }
+
+        function spawnMonster(monsterConfig) {
+            const enemiesAreaRect = elements.enemiesArea.getBoundingClientRect();
+            const areaWidth = enemiesAreaRect.width - 80;
+            const areaHeight = enemiesAreaRect.height - 60;
+            const areaLeft = 0;
+            const areaTop = 0;
+
+            const currentMonsterCount = gameState.enemies.filter(e => e.alive).length;
+            if (currentMonsterCount >= gameState.maxMonsters) {
+                showNotification(`❌ Limite de ${gameState.maxMonsters} monstres atteinte!`);
+                playSound('notification');
+                return;
+            }
+
+            const x = areaLeft + Math.random() * (areaWidth - 100);
+            const y = areaTop + 30 + Math.random() * (areaHeight - 100);
+
+            const visualDamageRatio = Math.random() * 0.4 + 0.2;
+            
+            const newEnemy = {
+                id: Date.now() + Math.random(),
+                hp: monsterConfig.hp,
+                maxHp: monsterConfig.hp,
+                visualDamageRatio: visualDamageRatio,
+                reward: monsterConfig.reward,
+                image: monsterConfig.image,
+                x: x,
+                y: y,
+                alive: true,
+                isBoss: monsterConfig === bossConfig
+            };
+            
+            gameState.enemies.push(newEnemy);
+            renderEnemies();
+            updateEnemiesCount();
+            showNotification(`🎯 ${monsterConfig === bossConfig ? 'BOSS' : 'Monstre'} apparu!`);
+            playSound('notification');
+            
+            saveGameState();
+        }
+
+        function spawnRandomMonster() {
+            const currentMonsterCount = gameState.enemies.filter(e => e.alive).length;
+            
+            if (currentMonsterCount >= gameState.maxMonsters) {
+                showNotification(`❌ Limite de ${gameState.maxMonsters} monstres atteinte!`);
+                playSound('notification');
+                return;
+            }
+            
+            const randomMonster = monstersConfig[Math.floor(Math.random() * monstersConfig.length)];
+            spawnMonster(randomMonster);
+        }
+
+        function spawnMiniMonster() {
+            spawnMonster(miniMonsterConfig);
+        }
+
+        function removeRandomMonster() {
+            const aliveEnemies = gameState.enemies.filter(e => e.alive && !e.isBoss);
+            
+            if (aliveEnemies.length === 0) {
+                showNotification('❌ Aucun monstre à supprimer!');
+                playSound('notification');
+                return;
+            }
+            
+            const randomEnemy = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
+            
+            gameState.enemies = gameState.enemies.map(enemy => {
+                if (enemy.id === randomEnemy.id) {
+                    return { ...enemy, alive: false };
+                }
+                return enemy;
+            });
+            
+            renderEnemies();
+            updateEnemiesCount();
+            showNotification('🗑️ Monstre supprimé!');
+            playSound('notification');
+            
+            saveGameState();
+        }
+
+        function clearAllMonsters() {
+            gameState.enemies = gameState.enemies.map(enemy => ({
+                ...enemy,
+                alive: false
+            }));
+            if (gameState.boss) {
+                gameState.boss.alive = false;
+            }
+            renderEnemies();
+            renderBoss();
+            updateEnemiesCount();
+            showNotification('🧹 Tous les monstres ont été supprimés!');
+            playSound('notification');
+        }
+
+        function renderEnemies() {
+            document.querySelectorAll('.enemy').forEach(el => el.remove());
+            
+            gameState.enemies.forEach(enemy => {
+                if (enemy.alive) {
+                    const enemyEl = document.createElement('div');
+                    enemyEl.className = `enemy ${gameState.targetedEnemy === enemy.id ? 'targeted' : ''}`;
+                    enemyEl.style.left = `${enemy.x}px`;
+                    enemyEl.style.top = `${enemy.y}px`;
+                    enemyEl.dataset.id = enemy.id;
+                    
+                    const damageTaken = enemy.maxHp - enemy.hp;
+                    const visualStartingHp = enemy.maxHp * (1 - enemy.visualDamageRatio);
+                    const currentVisualHp = Math.max(visualStartingHp - damageTaken, 0);
+                    
+                    enemyEl.innerHTML = `
+                        <div class="enemy-content">
+                            ${gameState.targetedEnemy === enemy.id ? '<i class="fas fa-crosshairs target-indicator"></i>' : ''}
+                            <img src="${enemy.image}" alt="Monstre" class="enemy-icon" onerror="this.src='https://via.placeholder.com/50/374151/9ca3af?text=?'">
+                            <div class="health-bar">
+                                <div class="health-fill" style="width: ${(currentVisualHp / enemy.maxHp) * 100}%"></div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    elements.enemiesArea.appendChild(enemyEl);
+                }
+            });
+        }
+
+        function renderBoss() {
+            document.querySelectorAll('.boss').forEach(el => el.remove());
+            
+            if (gameState.boss && gameState.boss.alive) {
+                const bossEl = document.createElement('div');
+                bossEl.className = `boss ${gameState.targetedEnemy === 'boss' ? 'boss-targeted' : ''}`;
+                bossEl.style.left = `${gameState.boss.x}px`;
+                bossEl.style.top = `${gameState.boss.y}px`;
+                
+                const damageTaken = gameState.boss.maxHp - gameState.boss.hp;
+                const visualStartingHp = gameState.boss.maxHp * (1 - gameState.boss.visualDamageRatio);
+                const currentVisualHp = Math.max(visualStartingHp - damageTaken, 0);
+                
+                bossEl.innerHTML = `
+                    <div class="boss-content">
+                        ${gameState.targetedEnemy === 'boss' ? '<i class="fas fa-crosshairs target-indicator" style="font-size: 3rem;"></i>' : ''}
+                        <img src="${gameState.boss.image}" alt="Boss" class="boss-icon">
+                        <div class="boss-health-bar">
+                            <div class="boss-health-fill" style="width: ${(currentVisualHp / gameState.boss.maxHp) * 100}%"></div>
+                        </div>
+                    </div>
+                `;
+                
+                elements.enemiesArea.appendChild(bossEl);
+            }
+        }
+
+        // ============================================================================
+        // FONCTIONS D'AFFICHAGE
+        // ============================================================================
+
+        function updateCoinsDisplay() {
+            elements.coinsDisplay.textContent = gameState.coins.toLocaleString();
+        }
+
+        function updateEnemiesCount() {
+            const aliveEnemies = gameState.enemies.filter(e => e.alive).length;
+            const aliveBoss = gameState.boss && gameState.boss.alive ? 1 : 0;
+            const totalAlive = aliveEnemies + aliveBoss;
+            
+            elements.enemiesCount.textContent = totalAlive;
+            
+            const gameOver = totalAlive === 0;
+            if (gameOver) {
+                setTimeout(() => {
+                    playSound('win');
+                    alert('🎉 VICTOIRE! Vous avez vaincu tous les ennemis!');
+                    initGame();
+                }, 1000);
+            }
+        }
+
+        function updateAttackQueueDisplay() {
+            if (gameState.attackQueue > 0) {
+                elements.queueBadge.textContent = gameState.attackQueue;
+                elements.queueBadge.style.display = 'flex';
+            } else {
+                elements.queueBadge.style.display = 'none';
+            }
+        }
+
+        function updateAttackQueueBar() {
+            elements.queueCount.textContent = gameState.attackQueue;
+            elements.currentAttacker.textContent = gameState.currentAttacker;
+            elements.attackSpeed.textContent = gameState.attackSpeed;
+        }
+
+        function updatePityCounterDisplay() {
+            elements.pityCount.textContent = gameState.pityCounter;
+            
+            if (gameState.pityCounter >= 250) {
+                elements.pityCounter.style.color = '#ef4444';
+            } else if (gameState.pityCounter >= 150) {
+                elements.pityCounter.style.color = '#fbbf24';
+            } else {
+                elements.pityCounter.style.color = '#fbbf24';
+            }
+        }
+
+        // ============================================================================
+        // FONCTIONS DE GESTION DE LA BIBLIOTHÈQUE
+        // ============================================================================
+
+        function initLibraryPanel() {
+            updateExistingMonstersList();
+            
+            elements.floatingLibraryBtn.addEventListener('click', openLibraryPanel);
+            elements.libraryCloseBtn.addEventListener('click', closeLibraryPanel);
+            elements.addMonsterBtn.addEventListener('click', handleAddMonster);
+            elements.resetLibraryBtn.addEventListener('click', resetMonstersLibrary);
+            elements.exportLibraryBtn.addEventListener('click', exportLibrary);
+            elements.importLibraryBtn.addEventListener('click', importLibrary);
+            elements.libraryOverlay.addEventListener('click', closeLibraryPanel);
+        }
+
+        function openLibraryPanel() {
+            elements.libraryPanel.style.display = 'block';
+            elements.libraryOverlay.style.display = 'block';
+            updateExistingMonstersList();
+            playSound('buttonClick');
+        }
+
+        function closeLibraryPanel() {
+            elements.libraryPanel.style.display = 'none';
+            elements.libraryOverlay.style.display = 'none';
+            playSound('buttonClick');
+        }
+
+        function updateExistingMonstersList() {
+            const container = elements.existingMonsters;
+            if (!container) return;
+            
+            container.innerHTML = monstersConfig.map((monster, index) => `
+                <div class="existing-monster-item">
+                    <img src="${monster.image}" alt="Monstre ${index + 1}" class="existing-monster-image" onerror="this.src='https://via.placeholder.com/60/374151/9ca3af?text=?'">
+                    <div class="existing-monster-info">
+                        <div>HP: ${monster.hp}</div>
+                        <div>💰: ${monster.reward}</div>
+                    </div>
+                    <div class="monster-actions">
+                        <button class="monster-action-btn update-btn" onclick="updateMonsterImage(${index}, prompt('Nouvelle URL image:', '${monster.image}'))">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="monster-action-btn delete-btn" onclick="deleteMonster(${index})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function handleAddMonster() {
+            const imageUrl = elements.newMonsterImage.value;
+            const hp = parseInt(elements.newMonsterHp.value) || 100;
+            const reward = parseInt(elements.newMonsterReward.value) || 10;
+            
+            if (!imageUrl) {
+                showNotification('❌ Veuillez entrer une URL d\'image');
+                return;
+            }
+            
+            addNewMonster(imageUrl, hp, reward);
+            
+            elements.newMonsterImage.value = '';
+            elements.newMonsterHp.value = '100';
+            elements.newMonsterReward.value = '10';
+            
+            updateExistingMonstersList();
+        }
+
+        function addNewMonster(imageUrl, hp = 100, reward = 10) {
+            const newMonster = {
+                image: imageUrl,
+                hp: hp,
+                reward: reward
+            };
+            
+            monstersConfig.push(newMonster);
+            saveMonstersLibrary();
+            initMonstersPanel();
+            refreshMonsterImages();
+            showNotification('🎉 Nouveau monstre ajouté à la bibliothèque!');
+        }
+
+        function updateMonsterImage(monsterIndex, newImageUrl) {
+            if (monsterIndex >= 0 && monsterIndex < monstersConfig.length) {
+                monstersConfig[monsterIndex].image = newImageUrl;
+                saveMonstersLibrary();
+                refreshMonsterImages();
+                showNotification('✅ Image de monstre mise à jour!');
+                return true;
+            }
+            return false;
+        }
+
+        function deleteMonster(index) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer ce monstre?')) {
+                monstersConfig.splice(index, 1);
+                saveMonstersLibrary();
+                updateExistingMonstersList();
+                refreshMonsterImages();
+                showNotification('🗑️ Monstre supprimé de la bibliothèque');
+                playSound('notification');
+            }
+        }
+
+        function resetMonstersLibrary() {
+            if (confirm('Êtes-vous sûr de vouloir réinitialiser la bibliothèque des monstres? Toutes les modifications seront perdues.')) {
+                localStorage.removeItem('spaceInvaderMonstersLibrary');
+                location.reload();
+            }
+        }
+
+        function exportLibrary() {
+            const libraryData = {
+                monstersConfig: monstersConfig,
+                bossConfig: bossConfig,
+                miniMonsterConfig: miniMonsterConfig,
+                symbolTypes: symbolTypes,
+                exportDate: new Date().toISOString()
+            };
+            
+            const dataStr = JSON.stringify(libraryData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `space-invader-library-${Date.now()}.json`;
+            link.click();
+            
+            showNotification('📤 Bibliothèque exportée!');
+            playSound('notification');
+        }
+
+        function importLibrary() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = e => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = event => {
+                    try {
+                        const importedData = JSON.parse(event.target.result);
+                        
+                        if (importedData.monstersConfig) {
+                            monstersConfig.length = 0;
+                            importedData.monstersConfig.forEach(monster => {
+                                monstersConfig.push(monster);
+                            });
+                        }
+                        
+                        if (importedData.bossConfig) {
+                            Object.assign(bossConfig, importedData.bossConfig);
+                        }
+                        
+                        if (importedData.miniMonsterConfig) {
+                            Object.assign(miniMonsterConfig, importedData.miniMonsterConfig);
+                        }
+                        
+                        saveMonstersLibrary();
+                        initMonstersPanel();
+                        refreshMonsterImages();
+                        updateExistingMonstersList();
+                        
+                        showNotification('📥 Bibliothèque importée avec succès!');
+                        playSound('win');
+                    } catch (error) {
+                        showNotification('❌ Erreur lors de l\'importation du fichier');
+                        console.error('Import error:', error);
+                    }
+                };
+                
+                reader.readAsText(file);
+            };
+            
+            input.click();
+        }
+
+        function refreshMonsterImages() {
+            console.log('🔄 Rafraîchissement des images des monstres');
+            
+            document.querySelectorAll('.enemy').forEach(el => el.remove());
+            document.querySelectorAll('.boss').forEach(el => el.remove());
+            
+            renderEnemies();
+            renderBoss();
+            
+            showNotification('🔄 Images des monstres rafraîchies!');
+            playSound('buttonClick');
+        }
+
+        // ============================================================================
+        // FONCTIONS DE DÉPLACEMENT ET ANIMATION
+        // ============================================================================
+
+        function initShipDragAndDrop() {
+            const shipContainer = elements.playerShipContainer;
+            const enemiesArea = elements.enemiesArea;
+            
+            shipContainer.addEventListener('mousedown', startDrag);
+            shipContainer.addEventListener('touchstart', startDrag);
+            
+            function startDrag(e) {
+                e.preventDefault();
+                gameState.isDraggingShip = true;
+                
+                const rect = enemiesArea.getBoundingClientRect();
+                const shipRect = shipContainer.getBoundingClientRect();
+                
+                if (e.type === 'touchstart') {
+                    gameState.shipOffsetX = e.touches[0].clientX - shipRect.left;
+                    gameState.shipOffsetY = e.touches[0].clientY - shipRect.top;
+                } else {
+                    gameState.shipOffsetX = e.clientX - shipRect.left;
+                    gameState.shipOffsetY = e.clientY - shipRect.top;
+                }
+                
+                document.addEventListener('mousemove', dragShip);
+                document.addEventListener('touchmove', dragShip);
+                document.addEventListener('mouseup', stopDrag);
+                document.addEventListener('touchend', stopDrag);
+                
+                shipContainer.style.transition = 'none';
+                shipContainer.style.zIndex = '100';
+            }
+            
+            function dragShip(e) {
+                if (!gameState.isDraggingShip) return;
+                
+                e.preventDefault();
+                const rect = enemiesArea.getBoundingClientRect();
+                
+                let clientX, clientY;
+                if (e.type === 'touchmove') {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                } else {
+                    clientX = e.clientX;
+                    clientY = e.clientY;
+                }
+                
+                let newX = clientX - rect.left - gameState.shipOffsetX;
+                let newY = clientY - rect.top - gameState.shipOffsetY;
+                
+                newX = Math.max(0, Math.min(newX, rect.width - shipContainer.offsetWidth));
+                newY = Math.max(0, Math.min(newY, rect.height - shipContainer.offsetHeight));
+                
+                shipContainer.style.left = `${newX}px`;
+                shipContainer.style.top = `${newY}px`;
+                shipContainer.style.transform = 'none';
+            }
+            
+            function stopDrag() {
+                gameState.isDraggingShip = false;
+                document.removeEventListener('mousemove', dragShip);
+                document.removeEventListener('touchmove', dragShip);
+                document.removeEventListener('mouseup', stopDrag);
+                document.removeEventListener('touchend', stopDrag);
+                
+                shipContainer.style.transition = 'all 0.3s ease';
+                shipContainer.style.zIndex = '10';
+                
+                saveGameState();
+            }
+        }
+
+        function startShipMovement() {
+            const shipMoveInterval = setInterval(() => {
+                if (!gameState.gameStarted) {
+                    clearInterval(shipMoveInterval);
+                    return;
+                }
+                
+                if (!gameState.isDraggingShip) {
+                    elements.playerShip.classList.add('ship-moving');
+                }
+            }, 100);
+        }
+
+        function startEnemyZoomEffect() {
+            const zoomInterval = setInterval(() => {
+                if (!gameState.gameStarted) {
+                    clearInterval(zoomInterval);
+                    return;
+                }
+                
+                document.querySelectorAll('.enemy-icon').forEach(icon => {
+                    icon.classList.add('enemy-zooming');
+                });
+            }, 1000);
+        }
+
+        // ============================================================================
+        // FONCTIONS DE COMBAT
+        // ============================================================================
+
+        function getCurrentAttackerName() {
+            // Si la file d'attaque détaillée n'est pas vide, prendre le nom du premier
+            if (gameState.attackQueueDetailed.length > 0) {
+                return gameState.attackQueueDetailed[0].name;
+            }
+            // Sinon utiliser l'attaquant courant
+            return gameState.currentAttacker !== 'Prêt à attaquer' ? gameState.currentAttacker : gameState.playerName;
+        }
+
+        function queueAttack(userName = null) {
+            // Utiliser le nom fourni ou le nom du joueur par défaut
+            const attackerName = userName || gameState.playerName;
+            
+            gameState.attackQueue += gameState.attackMode;
+            
+            if (gameState.attackQueueDetailed.length === 0) {
+                gameState.currentAttacker = attackerName;
+            }
+            
+            addToDetailedQueue(attackerName, gameState.attackMode);
+            
+            updateAttackQueueDisplay();
+            updateAttackQueueBar();
+            updateDetailedQueueDisplay();
+            playSound('shoot', 100);
+            
+            if (!gameState.isProcessingAttacks) {
+                processAttackQueue();
+            }
+            
+            saveGameState();
+        }
+
+        function addToDetailedQueue(attackerName, attackCount) {
+            gameState.attackQueueDetailed.push({
+                name: attackerName,
+                attacks: attackCount,
+                id: Date.now() + Math.random()
+            });
+        }
+
+        function updateDetailedQueueDisplay() {
+            if (!elements.attackQueueList) return;
+            
+            if (gameState.attackQueueDetailed.length === 0) {
+                elements.attackQueueList.innerHTML = `
+                    <div class="queue-empty">
+                        <i class="fas fa-inbox" style="font-size: 2em; margin-bottom: 10px; display: block; opacity: 0.5;"></i>
+                        Aucune attaque en attente
+                    </div>
+                `;
+                if (elements.queueTotal) {
+                    elements.queueTotal.textContent = 'Total: 0 attaque(s)';
+                }
+                return;
+            }
+            
+            const currentAttacker = gameState.currentAttacker;
+            
+            elements.attackQueueList.innerHTML = gameState.attackQueueDetailed.map((item, index) => {
+                const isActive = item.name === currentAttacker && index === 0;
+                const progress = isActive ? ((gameState.attackQueueDetailed[0].attacks - gameState.attackQueue) / gameState.attackQueueDetailed[0].attacks) * 100 : 0;
+                
+                return `
+                    <div class="queue-item ${isActive ? 'active' : ''}">
+                        <div class="queue-item-info">
+                            <div class="queue-item-name">${item.name}</div>
+                            <div class="queue-item-status">
+                                ${isActive ? '🎯 En cours...' : '⏳ En attente'}
+                            </div>
+                            ${isActive ? `<div class="queue-progress"><div class="queue-progress-fill" style="width: ${progress}%"></div></div>` : ''}
+                        </div>
+                        <div class="queue-item-attacks">
+                            ${item.attacks}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            const totalAttacks = gameState.attackQueueDetailed.reduce((sum, item) => sum + item.attacks, 0);
+            if (elements.queueTotal) {
+                elements.queueTotal.textContent = `Total: ${totalAttacks} attaque(s)`;
+            }
+        }
+
+        function processAttackQueue() {
+            if (gameState.attackQueue <= 0) {
+                gameState.isProcessingAttacks = false;
+                return;
+            }
+            
+            gameState.isProcessingAttacks = true;
+            
+            const aliveEnemies = gameState.enemies.filter(e => e.alive);
+            const allTargets = gameState.boss && gameState.boss.alive ? [...aliveEnemies, gameState.boss] : aliveEnemies;
+            
+            if (allTargets.length === 0) {
+                gameState.attackQueue = 0;
+                updateAttackQueueDisplay();
+                updateAttackQueueBar();
+                gameState.isProcessingAttacks = false;
+                return;
+            }
+
+            elements.playerShip.classList.add('shooting');
+            
+            const randomTarget = allTargets[Math.floor(Math.random() * allTargets.length)];
+            gameState.targetedEnemy = randomTarget.id;
+            
+            const shipRect = elements.playerShipContainer.getBoundingClientRect();
+            const gameFieldRect = elements.enemiesArea.getBoundingClientRect();
+            
+            const shipX = shipRect.left - gameFieldRect.left + shipRect.width / 2;
+            const shipY = shipRect.top - gameFieldRect.top;
+            
+            const targetX = randomTarget.x;
+            const targetY = randomTarget.y;
+            
+            createProjectile(shipX, shipY, targetX, targetY);
+            
+            renderEnemies();
+            renderBoss();
+            
+            setTimeout(() => {
+                const attackerName = getCurrentAttackerName();
+                
+                // Jouer le son quand un ennemi est touché
+                playSound('enemyHit', 100);
+                
+                if (randomTarget.id === 'boss') {
+                    const newHp = gameState.boss.hp - 1;
+                    if (newHp <= 0) {
+                        gameState.coins += gameState.boss.reward;
+                        addWinner(attackerName, `BOSS vaincu - ${gameState.boss.reward} pièces`, gameState.boss.reward, 'boss');
+                        gameState.boss.alive = false;
+                        gameState.boss.hp = 0;
+                        playSound('win');
+                    } else {
+                        gameState.boss.hp = newHp;
+                    }
+                } else {
+                    gameState.enemies = gameState.enemies.map(enemy => {
+                        if (enemy.id === randomTarget.id) {
+                            const newHp = enemy.hp - 1;
+                            if (newHp <= 0) {
+                                gameState.coins += enemy.reward;
+                                addWinner(attackerName, `Ennemi vaincu - ${enemy.reward} pièces`, enemy.reward, 'enemy');
+                                playSound('explosion', 100);
+                                return { ...enemy, hp: 0, alive: false };
+                            }
+                            return { ...enemy, hp: newHp };
+                        }
+                        return enemy;
+                    });
+                }
+                
+                updateCoinsDisplay();
+                updateEnemiesCount();
+                renderEnemies();
+                renderBoss();
+                
+                gameState.targetedEnemy = null;
+                gameState.attackQueue--;
+                updateAttackQueueDisplay();
+                updateAttackQueueBar();
+                
+                if (gameState.attackQueueDetailed.length > 0) {
+                    gameState.attackQueueDetailed[0].attacks--;
+                    if (gameState.attackQueueDetailed[0].attacks <= 0) {
+                        gameState.attackQueueDetailed.shift();
+                        if (gameState.attackQueueDetailed.length > 0) {
+                            gameState.currentAttacker = gameState.attackQueueDetailed[0].name;
+                        } else {
+                            gameState.currentAttacker = 'Prêt à attaquer';
+                        }
+                    }
+                }
+                
+                updateDetailedQueueDisplay();
+                
+                elements.playerShip.classList.remove('shooting');
+                
+                spinAllSymbols(true);
+                
+                setTimeout(() => {
+                    processAttackQueue();
+                }, gameState.attackDelay);
+                
+                saveGameState();
+            }, 300);
+        }
+
+        function queueAreaAttack(userName = null) {
+            // Utiliser le nom fourni ou le nom du joueur par défaut
+            const attackerName = userName || gameState.playerName;
+            
+            gameState.attackQueue += 1;
+            
+            if (gameState.attackQueueDetailed.length === 0) {
+                gameState.currentAttacker = attackerName;
+            }
+            
+            addToDetailedQueue(attackerName, 1);
+            
+            updateAttackQueueDisplay();
+            updateAttackQueueBar();
+            updateDetailedQueueDisplay();
+            playSound('shoot', 100);
+            
+            if (!gameState.isProcessingAttacks) {
+                processAreaAttack(attackerName);
+            }
+            
+            saveGameState();
+        }
+
+        function processAreaAttack(userName = null) {
+            const attackerName = userName || gameState.playerName;
+            
+            if (gameState.attackQueue <= 0) {
+                gameState.isProcessingAttacks = false;
+                return;
+            }
+            
+            gameState.isProcessingAttacks = true;
+            
+            const aliveEnemies = gameState.enemies.filter(e => e.alive);
+            const allTargets = gameState.boss && gameState.boss.alive ? [...aliveEnemies, gameState.boss] : aliveEnemies;
+            
+            if (allTargets.length === 0) {
+                gameState.attackQueue = 0;
+                updateAttackQueueDisplay();
+                updateAttackQueueBar();
+                gameState.isProcessingAttacks = false;
+                return;
+            }
+
+            elements.playerShip.classList.add('shooting');
+            
+            createAreaAttackEffect();
+            
+            setTimeout(() => {
+                let totalReward = 0;
+                let monstersDestroyed = 0;
+                
+                allTargets.forEach(target => {
+                    if (target.id === 'boss') {
+                        const newHp = gameState.boss.hp - 5;
+                        if (newHp <= 0) {
+                            totalReward += gameState.boss.reward;
+                            monstersDestroyed++;
+                            addWinner(attackerName, `BOSS vaincu (Zone) - ${gameState.boss.reward} pièces`, gameState.boss.reward, 'boss');
+                            gameState.boss.alive = false;
+                            gameState.boss.hp = 0;
+                            playSound('win');
+                        } else {
+                            gameState.boss.hp = newHp;
+                        }
+                    } else {
+                        gameState.enemies = gameState.enemies.map(enemy => {
+                            if (enemy.id === target.id) {
+                                const newHp = enemy.hp - 5;
+                                if (newHp <= 0) {
+                                    totalReward += enemy.reward;
+                                    monstersDestroyed++;
+                                    addWinner(attackerName, `Ennemi vaincu (Zone) - ${enemy.reward} pièces`, enemy.reward, 'enemy');
+                                    playSound('explosion', 100);
+                                    return { ...enemy, hp: 0, alive: false };
+                                }
+                                return { ...enemy, hp: newHp };
+                            }
+                            return enemy;
+                        });
+                    }
+                });
+                
+                if (totalReward > 0) {
+                    gameState.coins += totalReward;
+                    updateCoinsDisplay();
+                    showNotification(`💥 ${attackerName}: Attaque de zone! ${monstersDestroyed} monstre(s) détruit(s) - ${totalReward} pièces gagnées!`);
+                } else {
+                    showNotification(`💥 ${attackerName}: Attaque de zone! -5 HP à tous les monstres!`);
+                }
+                
+                updateEnemiesCount();
+                renderEnemies();
+                renderBoss();
+                
+                gameState.attackQueue--;
+                updateAttackQueueDisplay();
+                updateAttackQueueBar();
+                
+                if (gameState.attackQueueDetailed.length > 0) {
+                    gameState.attackQueueDetailed[0].attacks--;
+                    if (gameState.attackQueueDetailed[0].attacks <= 0) {
+                        gameState.attackQueueDetailed.shift();
+                        if (gameState.attackQueueDetailed.length > 0) {
+                            gameState.currentAttacker = gameState.attackQueueDetailed[0].name;
+                        } else {
+                            gameState.currentAttacker = 'Prêt à attaquer';
+                        }
+                    }
+                }
+                
+                updateDetailedQueueDisplay();
+                
+                elements.playerShip.classList.remove('shooting');
+                
+                spinAllSymbols(true);
+                
+                setTimeout(() => {
+                    processAttackQueue();
+                }, gameState.attackDelay);
+                
+                saveGameState();
+            }, 500);
+        }
+
+        function createAreaAttackEffect() {
+            const enemiesArea = elements.enemiesArea;
+            const effect = document.createElement('div');
+            effect.style.cssText = `
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: radial-gradient(circle, rgba(239,68,68,0.3) 0%, rgba(239,68,68,0) 70%);
+                animation: areaAttack 0.5s ease-out forwards;
+                z-index: 15;
+                pointer-events: none;
+            `;
+            
+            enemiesArea.appendChild(effect);
+            
+            if (!document.getElementById('areaAttackAnimation')) {
+                const style = document.createElement('style');
+                style.id = 'areaAttackAnimation';
+                style.textContent = `
+                    @keyframes areaAttack {
+                        0% { transform: scale(0.5); opacity: 1; }
+                        100% { transform: scale(1.5); opacity: 0; }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            setTimeout(() => {
+                if (effect.parentNode) {
+                    effect.parentNode.removeChild(effect);
+                }
+            }, 500);
+        }
+
+        function createProjectile(startX, startY, targetX, targetY) {
+            const projectile = document.createElement('div');
+            projectile.className = 'projectile';
+            projectile.style.left = `${startX}px`;
+            projectile.style.top = `${startY}px`;
+            
+            elements.enemiesArea.appendChild(projectile);
+            animateProjectile(projectile, startX, startY, targetX, targetY);
+        }
+
+        function animateProjectile(projectile, startX, startY, targetX, targetY) {
+            const distanceX = targetX - startX;
+            const distanceY = targetY - startY;
+            const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+            const duration = Math.min(300, distance * 1.5);
+            
+            const startTime = Date.now();
+            
+            function update() {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                const currentX = startX + distanceX * progress;
+                const currentY = startY + distanceY * progress;
+                
+                projectile.style.left = `${currentX}px`;
+                projectile.style.top = `${currentY}px`;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                } else {
+                    createExplosion(targetX, targetY);
+                    if (projectile.parentNode) {
+                        projectile.parentNode.removeChild(projectile);
+                    }
+                }
+            }
+            
+            update();
+        }
+
+        function createExplosion(x, y) {
+            const explosion = document.createElement('div');
+            explosion.className = 'explosion';
+            explosion.style.left = `${x - 25}px`;
+            explosion.style.top = `${y - 25}px`;
+            
+            elements.enemiesArea.appendChild(explosion);
+            
+            setTimeout(() => {
+                if (explosion.parentNode) {
+                    explosion.parentNode.removeChild(explosion);
+                }
+            }, 400);
+        }
+
+        // ============================================================================
+        // FONCTIONS DES SYMBOLES ET SPINS
+        // ============================================================================
+
+        function initSymbols() {
+            gameState.symbols = Array(gameState.symbolCount).fill(0).map(() => getRandomSymbol());
+            updateSymbolsDisplay();
+        }
+
+        function updateSymbolsDisplay() {
+            elements.symbolsContainer.innerHTML = '';
+            gameState.symbols.forEach((symbolIndex, index) => {
+                const symbolElement = document.createElement('div');
+                symbolElement.className = `symbol-wheel`;
+                symbolElement.id = `symbol${index + 1}`;
+                const symbolData = symbolTypes[symbolIndex];
+                const img = document.createElement('img');
+                img.src = symbolData.image;
+                img.alt = symbolData.name;
+                img.className = 'symbol-image';
+                symbolElement.appendChild(img);
+                elements.symbolsContainer.appendChild(symbolElement);
+            });
+        }
+
+        function updateSingleSymbol(index) {
+            const symbolElement = document.getElementById(`symbol${index + 1}`);
+            if (!symbolElement) return;
+            
+            const symbolData = symbolTypes[gameState.symbols[index]];
+            symbolElement.innerHTML = '';
+            const img = document.createElement('img');
+                img.src = symbolData.image;
+                img.alt = symbolData.name;
+                img.className = 'symbol-image';
+                symbolElement.appendChild(img);
+        }
+
+        function getRandomSymbol() {
+            const randomValue = Math.random();
+            let cumulativeProbability = 0;
+            
+            for (let i = 0; i < symbolTypes.length; i++) {
+                cumulativeProbability += symbolTypes[i].probability;
+                
+                if (randomValue <= cumulativeProbability) {
+                    return i;
+                }
+            }
+            
+            return 0;
+        }
+
+        function removeWinClasses() {
+            document.querySelectorAll('.symbol-wheel').forEach(symbol => {
+                symbol.classList.remove('winning', 'spinning');
+            });
+        }
+
+        async function spinSymbol(index, fast = false) {
+            return new Promise(resolve => {
+                const symbolElement = document.getElementById(`symbol${index + 1}`);
+                if (!symbolElement) return resolve();
+                symbolElement.classList.add('spinning');
+                let spins = 0;
+                const maxSpins = fast ? 1 : 2;
+                const spinInterval = fast ? 15 : 30;
+                const spinIntervalId = setInterval(() => {
+                    gameState.symbols[index] = getRandomSymbol();
+                    updateSingleSymbol(index);
+                    spins++;
+                    if (spins >= maxSpins) {
+                        clearInterval(spinIntervalId);
+                        symbolElement.classList.remove('spinning');
+                        setTimeout(resolve, fast ? 5 : 10);
+                    }
+                }, spinInterval);
+            });
+        }
+
+        function calculateSpinRewards() {
+            let totalReward = 0;
+            let forcedAlignment = false;
+            
+            if (gameState.pityCounter >= 300) {
+                forcedAlignment = true;
+                const commonSymbol = 0;
+                gameState.symbols = Array(gameState.symbolCount).fill(commonSymbol);
+                const symbolData = symbolTypes[commonSymbol];
+                totalReward = symbolData.reward;
+                
+                for (let i = 0; i < gameState.symbolCount; i++) {
+                    setTimeout(() => {
+                        const symbolElement = document.getElementById(`symbol${i + 1}`);
+                        if (symbolElement) symbolElement.classList.add('winning');
+                    }, i * 100);
+                }
+                
+                showNotification(`🎁 BONUS! Alignement forcé après ${gameState.pityCounter} spins!`);
+                const attackerName = getCurrentAttackerName();
+                addWinner(attackerName, `Alignement forcé - ${symbolData.reward} pièces`, totalReward, 'pity');
+                gameState.pityCounter = 0;
+                playSound('win');
+            }
+            else {
+                const firstSymbol = gameState.symbols[0];
+                const allSymbolsIdentical = gameState.symbols.every(symbol => symbol === firstSymbol);
+                
+                if (allSymbolsIdentical) {
+                    const symbolData = symbolTypes[firstSymbol];
+                    totalReward = symbolData.reward;
+                    
+                    for (let i = 0; i < gameState.symbolCount; i++) {
+                        setTimeout(() => {
+                            const symbolElement = document.getElementById(`symbol${i + 1}`);
+                            if (symbolElement) symbolElement.classList.add('winning');
+                        }, i * 100);
+                    }
+                    
+                    showNotification(`🎉 VICTOIRE! ${symbolData.reward} pièces gagnées!`);
+                    const attackerName = getCurrentAttackerName();
+                    addWinner(attackerName, `Spin Gagnant - ${symbolData.reward} pièces`, totalReward, 'spin');
+                    gameState.pityCounter = 0;
+                    playSound('win');
+                } else {
+                    gameState.pityCounter++;
+                }
+            }
+            
+            gameState.spinCount++;
+            updatePityCounterDisplay();
+            return totalReward;
+        }
+
+        async function spinAllSymbols(fast = false) {
+            removeWinClasses();
+            
+            if (gameState.pityCounter < 300) {
+                gameState.symbols = Array(gameState.symbolCount).fill(0).map(() => getRandomSymbol());
+            }
+            
+            for (let i = 0; i < gameState.symbolCount; i++) {
+                await spinSymbol(i, fast);
+            }
+            
+            const spinReward = calculateSpinRewards();
+            if (spinReward > 0) {
+                gameState.spinRewards += spinReward;
+                gameState.coins += spinReward;
+                
+                updateSpinRewardsDisplay();
+                updateCoinsDisplay();
+                
+                // Jouer le son des pièces quand quelqu'un gagne
+                if (spinReward > 0) {
+                    playSound('coin', 200);
+                }
+                
+                if (gameState.pityCounter >= 300) {
+                    updateSymbolsDisplay();
+                }
+            }
+            
+            // Jouer le son d'attaque de 10 si c'est une attaque de 10 coups
+            if (gameState.attackMode === 10) {
+                playSound('attack10', 200);
+            }
+            
+            saveGameState();
+        }
+
+        function updateSpinRewardsDisplay() {
+            elements.spinRewardsAmount.textContent = gameState.spinRewards.toLocaleString();
+        }
+
+        // ============================================================================
+        // FONCTIONS DES GAGNANTS ET CONTRIBUTEURS
+        // ============================================================================
+
+        function addWinner(name, reward, coins, special) {
+            const winner = {
+                name: name,
+                reward: reward,
+                coins: coins,
+                special: special,
+                timestamp: new Date()
+            };
+            gameState.winners.unshift(winner);
+            
+            // CORRECTION : Toujours ajouter le contributeur avec le bon nom
+            addContributorCoins(name, coins);
+            updateWinnersDisplay();
+            
+            if (coins > 0) {
+                playSound('coin', 200);
+            }
+            
+            saveGameState();
+        }
+
+        function addContributorCoins(name, coins) {
+            if (!gameState.contributors[name]) {
+                gameState.contributors[name] = 0;
+            }
+            
+            gameState.contributors[name] += coins;
+            updateContributorsDisplay();
+            
+            saveGameState();
+        }
+
+        function updateWinnersDisplay() {
+            if (gameState.winners.length === 0) {
+                elements.winnersList.innerHTML = `
+                    <div class="winner-item">
+                        <div class="winner-name">Aucun gagnant</div>
+                        <div class="winner-reward">Soyez le premier!</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            elements.winnersList.innerHTML = gameState.winners.map(winner => `
+                <div class="winner-item ${winner.special === 'boss' ? 'boss' : ''}">
+                    <div class="winner-name">${winner.name}</div>
+                    <div class="winner-reward">${winner.reward}</div>
+                    <div class="winner-time">${formatTime(winner.timestamp)}</div>
+                </div>
+            `).join('');
+        }
+
+        function updateContributorsDisplay() {
+            const contributorsList = Object.entries(gameState.contributors)
+                .filter(([name, coins]) => coins > 0)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10);
+            
+            if (contributorsList.length === 0) {
+                elements.contributorsList.innerHTML = `
+                    <div class="contributor-item">
+                        <div class="contributor-header">
+                            <div class="contributor-rank">1</div>
+                            <div class="contributor-name">Aucun contributeur</div>
+                        </div>
+                        <div class="contributor-coins">0 pièces</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            elements.contributorsList.innerHTML = contributorsList.map(([name, coins], index) => `
+                <div class="contributor-item">
+                    <div class="contributor-header">
+                        <div class="contributor-rank">${index + 1}</div>
+                        <div class="contributor-name">${name}</div>
+                    </div>
+                    <div class="contributor-coins">${coins.toLocaleString()} pièces</div>
+                </div>
+            `).join('');
+        }
+
+        function resetContributors() {
+            if (Object.keys(gameState.contributors).length === 0) {
+                showNotification("Le tableau des contributeurs est déjà vide!");
+                return;
+            }
+            
+            if (confirm("Êtes-vous sûr de vouloir réinitialiser le tableau des contributeurs? Cette action est irréversible.")) {
+                gameState.contributors = {};
+                updateContributorsDisplay();
+                showNotification("✅ Tableau des contributeurs réinitialisé!");
+                playSound('notification');
+                
+                saveGameState();
+            }
+        }
+
+        function setPlayerName(name) {
+            if (name && name.trim() !== '') {
+                gameState.playerName = name.trim();
+                showNotification(`👤 Nom du joueur défini: ${gameState.playerName}`);
+                saveGameState();
+            }
+        }
+
+        function promptPlayerName() {
+            const name = prompt('Entrez votre nom de joueur:', gameState.playerName || 'Joueur');
+            if (name !== null) {
+                setPlayerName(name);
+            }
+        }
+
+        function formatTime(date) {
+            const now = new Date();
+            const diff = Math.floor((now - date) / 1000);
+            
+            if (diff < 60) return 'À l\'instant';
+            if (diff < 3600) return `Il y a ${Math.floor(diff / 60)} min`;
+            if (diff < 86400) return `Il y a ${Math.floor(diff / 3600)} h`;
+            return `Il y a ${Math.floor(diff / 86400)} j`;
+        }
+
+        // ============================================================================
+        // FONCTIONS TIKFINITY
+        // ============================================================================
+
+        function connectToTikFinity() {
+            if (gameState.isTikFinityConnected) return;
+            
+            updateTikFinityStatus('connecting', 'Connexion au serveur...');
+            elements.connectBtn.disabled = true;
+            elements.connectBtn.textContent = 'Connexion...';
+            
+            try {
+                gameState.tikfinitySocket = new WebSocket('ws://127.0.0.1:8832');
+                
+                gameState.tikfinitySocket.onopen = () => {
+                    console.log('✅ Connecté au serveur Space Invader');
+                    gameState.isTikFinityConnected = true;
+                    updateTikFinityStatus('connected', 'Connecté au serveur');
+                    elements.connectBtn.textContent = 'Déconnecter';
+                    elements.connectBtn.disabled = false;
+                    showNotification('✅ Connecté au serveur! Les actions TikFinity sont actives!');
+                    playSound('notification');
+                };
+                
+                gameState.tikfinitySocket.onmessage = (event) => {
+                    try {
+                        const message = JSON.parse(event.data);
+                        console.log('📨 Message reçu du serveur:', message);
+                        handleServerMessage(message);
+                    } catch (error) {
+                        console.error('❌ Erreur parsing message:', error);
+                    }
+                };
+                
+                gameState.tikfinitySocket.onclose = () => {
+                    console.log('🔌 Déconnecté du serveur');
+                    gameState.isTikFinityConnected = false;
+                    updateTikFinityStatus('disconnected', 'Déconnecté du serveur');
+                    elements.connectBtn.textContent = 'Se connecter';
+                    elements.connectBtn.disabled = false;
+                    setTimeout(connectToTikFinity, 5000);
+                };
+                
+                gameState.tikfinitySocket.onerror = (error) => {
+                    console.error('❌ Erreur WebSocket:', error);
+                    updateTikFinityStatus('disconnected', 'Serveur non disponible');
+                    elements.connectBtn.textContent = 'Se connecter';
+                    elements.connectBtn.disabled = false;
+                    showNotification('❌ Serveur non disponible. Lancez "npm start" d\'abord.');
+                };
+                
+            } catch (error) {
+                console.error('❌ Erreur connexion:', error);
+                updateTikFinityStatus('disconnected', 'Serveur non disponible');
+                elements.connectBtn.textContent = 'Se connecter';
+                elements.connectBtn.disabled = false;
+            }
+        }
+
+        function disconnectFromTikFinity() {
+            if (gameState.tikfinitySocket) {
+                gameState.tikfinitySocket.close();
+            }
+            gameState.isTikFinityConnected = false;
+            updateTikFinityStatus('disconnected', 'Déconnecté du serveur');
+            elements.connectBtn.textContent = 'Se connecter';
+        }
+
+        function updateTikFinityStatus(status, text) {
+            elements.statusDot.className = 'status-dot ' + status;
+            elements.statusText.textContent = text;
+        }
+
+        function handleServerMessage(message) {
+            console.log('🔄 Traitement du message:', message);
+            
+            try {
+                switch (message.type) {
+                    case 'add_attacks':
+                        handleTikFinityAttack(message.data);
+                        break;
+                        
+                    case 'set_attack_mode':
+                        handleSetAttackMode(message.data);
+                        break;
+                        
+                    case 'special_action':
+                        handleSpecialAction(message.data);
+                        break;
+                        
+                    case 'game_action':
+                        handleGameAction(message.data);
+                        break;
+                        
+                    case 'get_game_state':
+                        sendGameState();
+                        break;
+                        
+                    case 'connected':
+                        showNotification('✅ ' + (message.message || 'Connecté au serveur TikFinity'));
+                        break;
+                        
+                    default:
+                        console.log('Type de message non géré:', message.type);
+                        if (message.action) {
+                            handleSpecialAction(message);
+                        }
+                }
+            } catch (error) {
+                console.error('❌ Erreur traitement message:', error);
+            }
+        }
+
+        function handleSetAttackMode(data) {
+            const mode = data.mode || 1;
+            const userName = data.username || 'Système';
+            
+            if (setAttackMode(mode)) {
+                showNotification(`🎯 ${userName} a changé le mode d'attaque: x${mode}`);
+            }
+        }
+
+        function handleSpecialAction(data) {
+            const action = data.action;
+            const userName = data.username || 'Viewer';
+            const message = data.message || `Action ${action} déclenchée`;
+            
+            if (triggerSpecialAction(action, data)) {
+                showNotification(`🎮 ${userName}: ${message}`);
+            } else {
+                console.log('❌ Action spéciale non reconnue:', action);
+            }
+        }
+
+        function handleGameAction(data) {
+            const action = data.action;
+            const userName = data.username || 'Système';
+            
+            switch (action) {
+                case 'new_game':
+                    initGame();
+                    showNotification(`🔄 ${userName} a démarré une nouvelle partie`);
+                    break;
+                    
+                case 'spawn_monster':
+                    const monsterType = data.monster_type || 'random';
+                    if (monsterType === 'boss') {
+                        spawnMonster(bossConfig);
+                    } else if (monsterType === 'mini') {
+                        spawnMiniMonster();
+                    } else {
+                        spawnRandomMonster();
+                    }
+                    showNotification(`🎯 ${userName} a fait apparaître un monstre`);
+                    break;
+                    
+                case 'add_coins':
+                    const coins = data.coins || 100;
+                    gameState.coins += coins;
+                    updateCoinsDisplay();
+                    showNotification(`💰 ${userName} a ajouté ${coins} pièces`);
+                    break;
+            }
+        }
+
+        function handleTikFinityAttack(attackData) {
+            const userName = attackData.username || 'Viewer';
+            const attackCount = attackData.attackCount || 1;
+            const attackMode = attackData.attackMode || gameState.attackMode;
+            
+            console.log(`🎯 Traitement de ${attackCount} attaques (mode ${attackMode}) de ${userName}`);
+            
+            addAttacksWithMode(userName, attackCount, attackMode);
+        }
+
+        function setAttackMode(mode) {
+            const modes = {
+                1: elements.attackMode1,
+                10: elements.attackMode10,
+                500: elements.attackMode100
+            };
+            
+            if (modes[mode]) {
+                modes[mode].click();
+                showNotification(`🎯 Mode d'attaque changé: ${mode} coup(s)`);
+                return true;
+            }
+            return false;
+        }
+
+        function triggerSpecialAction(action, data = {}) {
+            const actions = {
+                'spawn_monster': () => spawnRandomMonster(),
+                'remove_monster': () => removeRandomMonster(),
+                'area_attack': () => queueAreaAttack(data.username || 'Viewer'),
+                'spawn_mini_monster': () => spawnMiniMonster(),
+                'clear_all_monsters': () => clearAllMonsters(),
+                'double_coins': () => activateDoubleCoins(),
+                'refresh_images': () => refreshMonsterImages(),
+                'new_game': () => initGame()
+            };
+            
+            if (actions[action]) {
+                actions[action]();
+                playSound('notification');
+                return true;
+            }
+            return false;
+        }
+
+        function addAttacksWithMode(userName, attackCount, attackMode = 1) {
+            console.log(`🎯 Ajout de ${attackCount} attaques (mode ${attackMode}) pour ${userName}`);
+            
+            const currentMode = gameState.attackMode;
+            
+            setAttackMode(attackMode);
+            
+            gameState.attackQueue += attackCount;
+            
+            if (gameState.attackQueueDetailed.length === 0) {
+                gameState.currentAttacker = userName;
+            }
+            
+            addToDetailedQueue(userName, attackCount);
+            
+            updateAttackQueueDisplay();
+            updateAttackQueueBar();
+            updateDetailedQueueDisplay();
+            
+            showNotification(`🎮 ${userName} envoie ${attackCount} attaque(s) (mode x${attackMode})!`);
+            playSound('notification');
+            
+            if (!gameState.isProcessingAttacks) {
+                processAttackQueue();
+            }
+            
+            if (currentMode !== attackMode) {
+                setTimeout(() => setAttackMode(currentMode), 100);
+            }
+            
+            saveGameState();
+        }
+
+        function getGameState() {
+            return {
+                coins: gameState.coins,
+                enemiesAlive: gameState.enemies.filter(e => e.alive).length + (gameState.boss && gameState.boss.alive ? 1 : 0),
+                attackQueue: gameState.attackQueue,
+                currentAttacker: gameState.currentAttacker,
+                attackMode: gameState.attackMode,
+                isConnected: gameState.isTikFinityConnected,
+                winnersCount: gameState.winners.length,
+                contributorsCount: Object.keys(gameState.contributors).length
+            };
+        }
+
+        function sendGameState() {
+            if (gameState.tikfinitySocket && gameState.isTikFinityConnected) {
+                const state = getGameState();
+                gameState.tikfinitySocket.send(JSON.stringify({
+                    type: 'game_state',
+                    data: state
+                }));
+            }
+        }
+
+        function activateDoubleCoins() {
+            showNotification('💰 Double des pièces activé pour 30 secondes!');
+            // Implémentez la logique du double des pièces ici
+        }
+
+        // ============================================================================
+        // FONCTION DE NOTIFICATION
+        // ============================================================================
+
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: linear-gradient(45deg, #4ecdc4, #44a08d);
+                color: white;
+                padding: 15px 25px;
+                border-radius: 10px;
+                font-weight: bold;
+                z-index: 10000;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                animation: slideInDown 0.5s ease;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOutUp 0.5s ease';
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 500);
+            }, 3000);
+            
+            if (!document.getElementById('notificationAnimations')) {
+                const style = document.createElement('style');
+                style.id = 'notificationAnimations';
+                style.textContent = `
+                    @keyframes slideInDown {
+                        from { transform: translateX(-50%) translateY(-100%); opacity: 0; }
+                        to { transform: translateX(-50%) translateY(0); opacity: 1; }
+                    }
+                    @keyframes slideOutUp {
+                        from { transform: translateX(-50%) translateY(0); opacity: 1; }
+                        to { transform: translateX(-50%) translateY(-100%); opacity: 0; }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+        }
+
+        // ============================================================================
+        // ÉVÉNEMENTS
+        // ============================================================================
+
+        elements.newGameButton.addEventListener('click', () => {
+            initGame();
+            playSound('buttonClick');
+        });
+        
+        elements.refreshImagesButton.addEventListener('click', refreshMonsterImages);
+        
+        // CORRECTION : Utiliser le nom du joueur pour les attaques manuelles
+        elements.shootButton.addEventListener('click', () => queueAttack());
+        
+        elements.attackMode1.addEventListener('click', () => {
+            gameState.attackMode = 1;
+            elements.attackMode1.classList.add('active');
+            elements.attackMode10.classList.remove('active');
+            elements.attackMode100.classList.remove('active');
+            elements.shootButton.innerHTML = '<i class="fas fa-crosshairs"></i> ATTAQUER (1 coup)';
+            playSound('buttonClick');
+            saveGameState();
+        });
+        
+        elements.attackMode10.addEventListener('click', () => {
+            gameState.attackMode = 10;
+            elements.attackMode10.classList.add('active');
+            elements.attackMode1.classList.remove('active');
+            elements.attackMode100.classList.remove('active');
+            elements.shootButton.innerHTML = '<i class="fas fa-crosshairs"></i> ATTAQUER (10 coups)';
+            playSound('buttonClick');
+            saveGameState();
+        });
+
+        elements.attackMode100.addEventListener('click', () => {
+            gameState.attackMode = 500;
+            elements.attackMode100.classList.add('active');
+            elements.attackMode1.classList.remove('active');
+            elements.attackMode10.classList.remove('active');
+            elements.shootButton.innerHTML = '<i class="fas fa-crosshairs"></i> ATTAQUER (500 coups)';
+            playSound('buttonClick');
+            saveGameState();
+        });
+
+        // CORRECTION : Utiliser le nom du joueur pour les actions spéciales
+        elements.spawnMonsterBtn.addEventListener('click', spawnRandomMonster);
+        elements.areaAttackBtn.addEventListener('click', () => queueAreaAttack());
+        elements.removeMonsterBtn.addEventListener('click', removeRandomMonster);
+
+        elements.connectBtn.addEventListener('click', () => {
+            if (gameState.isTikFinityConnected) {
+                disconnectFromTikFinity();
+            } else {
+                connectToTikFinity();
+            }
+            playSound('buttonClick');
+        });
+
+        elements.resetContributorsBtn.addEventListener('click', resetContributors);
+
+        // Ajout du bouton pour changer le nom
+        elements.changeNameButton.addEventListener('click', promptPlayerName);
+
+        if (elements.volumeSlider) {
+            elements.volumeSlider.addEventListener('input', (e) => {
+                updateVolume(e.target.value);
+                saveGameState();
+            });
+        }
+
+        if (elements.audioToggleBtn) {
+            elements.audioToggleBtn.addEventListener('click', toggleAudio);
+        }
+
+        // ============================================================================
+        // DRAGGABLE PANELS
+        // ============================================================================
+
+        function makeDraggable(element) {
+            let isDragging = false;
+            let currentX;
+            let currentY;
+            let initialX;
+            let initialY;
+            let xOffset = 0;
+            let yOffset = 0;
+
+            const header = element.querySelector('.winners-header, .monsters-header, .contributors-header, .attack-queue-header, .audio-header, .library-header');
+            if (header) {
+                header.addEventListener('mousedown', dragStart);
+                header.addEventListener('touchstart', dragStart);
+            } else {
+                element.addEventListener('mousedown', dragStart);
+                element.addEventListener('touchstart', dragStart);
+            }
+
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', dragEnd);
+            document.addEventListener('touchmove', drag);
+            document.addEventListener('touchend', dragEnd);
+
+            function dragStart(e) {
+                if (e.type === 'touchstart') {
+                    initialX = e.touches[0].clientX - xOffset;
+                    initialY = e.touches[0].clientY - yOffset;
+                } else {
+                    initialX = e.clientX - xOffset;
+                    initialY = e.clientY - yOffset;
+                }
+
+                isDragging = true;
+                element.style.transition = 'none';
+            }
+
+            function drag(e) {
+                if (isDragging) {
+                    e.preventDefault();
+                    
+                    if (e.type === 'touchmove') {
+                        currentX = e.touches[0].clientX - initialX;
+                        currentY = e.touches[0].clientY - initialY;
+                    } else {
+                        currentX = e.clientX - initialX;
+                        currentY = e.clientY - initialY;
+                    }
+
+                    xOffset = currentX;
+                    yOffset = currentY;
+
+                    setTranslate(currentX, currentY, element);
+                }
+            }
+
+            function dragEnd(e) {
+                if (isDragging) {
+                    initialX = currentX;
+                    initialY = currentY;
+                    isDragging = false;
+                    element.style.transition = 'all 0.3s ease';
+                }
+            }
+
+            function setTranslate(xPos, yPos, el) {
+                el.style.transform = `translate(${xPos}px, ${yPos}px)`;
+            }
+        }
+
+        // ============================================================================
+        // INITIALISATION
+        // ============================================================================
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initGame();
+            setTimeout(connectToTikFinity, 1000);
+            
+            // Rendre les panels draggables
+            makeDraggable(elements.winnersPanel);
+            makeDraggable(elements.monstersPanel);
+            makeDraggable(elements.contributorsPanel);
+            makeDraggable(elements.audioControls);
+            makeDraggable(elements.attackQueuePanel);
+            makeDraggable(elements.libraryPanel);
+        });
+
+        window.addEventListener('beforeunload', () => {
+            saveGameState();
+        });
+
+        setInterval(() => {
+            if (gameState.gameStarted) {
+                saveGameState();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>
