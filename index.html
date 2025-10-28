@@ -2169,6 +2169,13 @@
                 
                 const visualDamageRatio = Math.random() * 0.4 + 0.2;
                 
+                // Calculer la position avec un espacement approprié
+                const x = areaLeft + (col * enemySpacingX) + 30;
+                const y = areaTop + startY + (row * enemySpacingY);
+                
+                // Vérifier si cette position chevauche un autre monstre
+                const position = findValidPosition(x, y, newEnemies);
+                
                 newEnemies.push({
                     id: i,
                     hp: monsterConfig.hp,
@@ -2176,8 +2183,8 @@
                     visualDamageRatio: visualDamageRatio,
                     reward: monsterConfig.reward,
                     image: monsterConfig.image,
-                    x: areaLeft + (col * enemySpacingX) + 30,
-                    y: areaTop + startY + (row * enemySpacingY),
+                    x: position.x,
+                    y: position.y,
                     alive: true,
                     isBoss: false
                 });
@@ -2233,6 +2240,44 @@
         // FONCTIONS DES MONSTRES
         // ============================================================================
 
+        function findValidPosition(x, y, existingEnemies, maxAttempts = 50) {
+            let attempts = 0;
+            let newX = x;
+            let newY = y;
+            
+            while (attempts < maxAttempts) {
+                let collision = false;
+                
+                // Vérifier la collision avec les ennemis existants
+                for (const enemy of existingEnemies) {
+                    const distance = Math.sqrt(Math.pow(enemy.x - newX, 2) + Math.pow(enemy.y - newY, 2));
+                    
+                    // Distance minimale entre les monstres (80 pixels)
+                    if (distance < 80) {
+                        collision = true;
+                        break;
+                    }
+                }
+                
+                if (!collision) {
+                    return { x: newX, y: newY };
+                }
+                
+                // Essayer une nouvelle position aléatoire
+                const enemiesAreaRect = elements.enemiesArea.getBoundingClientRect();
+                const areaWidth = enemiesAreaRect.width - 80;
+                const areaHeight = enemiesAreaRect.height - 60;
+                
+                newX = Math.random() * (areaWidth - 60) + 30;
+                newY = Math.random() * (areaHeight - 100) + 30;
+                
+                attempts++;
+            }
+            
+            // Si on ne trouve pas de position valide, retourner la position originale
+            return { x: x, y: y };
+        }
+
         function initMonstersPanel() {
             elements.monstersGrid.innerHTML = '';
             
@@ -2277,8 +2322,11 @@
                 return;
             }
 
+            // Générer une position aléatoire qui ne chevauche pas les autres monstres
             const x = areaLeft + Math.random() * (areaWidth - 100);
             const y = areaTop + 30 + Math.random() * (areaHeight - 100);
+            
+            const position = findValidPosition(x, y, gameState.enemies.filter(e => e.alive));
 
             const visualDamageRatio = Math.random() * 0.4 + 0.2;
             
@@ -2289,8 +2337,8 @@
                 visualDamageRatio: visualDamageRatio,
                 reward: monsterConfig.reward,
                 image: monsterConfig.image,
-                x: x,
-                y: y,
+                x: position.x,
+                y: position.y,
                 alive: true,
                 isBoss: monsterConfig === bossConfig
             };
