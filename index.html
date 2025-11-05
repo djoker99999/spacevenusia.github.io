@@ -1762,112 +1762,6 @@
         };
 
         // ============================================================================
-        // FONCTIONS DE SAUVEGARDE ET CHARGEMENT
-        // ============================================================================
-
-        function saveMonstersLibrary() {
-            const monstersData = {
-                monstersConfig: monstersConfig,
-                bossConfig: bossConfig,
-                miniMonsterConfig: miniMonsterConfig,
-                symbolTypes: symbolTypes,
-                lastUpdate: Date.now()
-            };
-            localStorage.setItem('spaceInvaderMonstersLibrary', JSON.stringify(monstersData));
-            console.log('💾 Bibliothèque des monstres sauvegardée');
-        }
-
-        function loadMonstersLibrary() {
-            const savedLibrary = localStorage.getItem('spaceInvaderMonstersLibrary');
-            
-            if (savedLibrary) {
-                try {
-                    const loadedLibrary = JSON.parse(savedLibrary);
-                    
-                    if (loadedLibrary.monstersConfig && loadedLibrary.monstersConfig.length > 0) {
-                        monstersConfig = loadedLibrary.monstersConfig;
-                    }
-                    
-                    if (loadedLibrary.bossConfig) {
-                        bossConfig = loadedLibrary.bossConfig;
-                    }
-                    
-                    if (loadedLibrary.miniMonsterConfig) {
-                        miniMonsterConfig = loadedLibrary.miniMonsterConfig;
-                    }
-                    
-                    console.log('📂 Bibliothèque des monstres chargée');
-                    return true;
-                } catch (error) {
-                    console.error('❌ Erreur chargement bibliothèque:', error);
-                    return false;
-                }
-            }
-            return false;
-        }
-
-        function saveGameState() {
-            const gameStateToSave = {
-                enemies: gameState.enemies,
-                boss: gameState.boss,
-                coins: gameState.coins,
-                winners: gameState.winners,
-                playerName: gameState.playerName,
-                attackMode: gameState.attackMode,
-                attackQueue: gameState.attackQueue,
-                symbols: gameState.symbols,
-                spinRewards: gameState.spinRewards,
-                spinCount: gameState.spinCount,
-                pityCounter: gameState.pityCounter,
-                contributors: gameState.contributors,
-                audioEnabled: gameState.audioEnabled,
-                masterVolume: gameState.masterVolume,
-                attackQueueDetailed: gameState.attackQueueDetailed,
-                currentAttacker: gameState.currentAttacker,
-                gameStarted: gameState.gameStarted
-            };
-            
-            localStorage.setItem('spaceInvaderGameState', JSON.stringify(gameStateToSave));
-            saveMonstersLibrary();
-            console.log('💾 État du jeu ET bibliothèque sauvegardés');
-        }
-
-        function loadGameState() {
-            const savedState = localStorage.getItem('spaceInvaderGameState');
-            
-            if (savedState) {
-                try {
-                    const loadedState = JSON.parse(savedState);
-                    
-                    gameState.enemies = loadedState.enemies || [];
-                    gameState.boss = loadedState.boss || null;
-                    gameState.coins = loadedState.coins || 0;
-                    gameState.winners = loadedState.winners || [];
-                    gameState.playerName = loadedState.playerName || 'Joueur';
-                    gameState.attackMode = loadedState.attackMode || 1;
-                    gameState.attackQueue = loadedState.attackQueue || 0;
-                    gameState.symbols = loadedState.symbols || [];
-                    gameState.spinRewards = loadedState.spinRewards || 0;
-                    gameState.spinCount = loadedState.spinCount || 0;
-                    gameState.pityCounter = loadedState.pityCounter || 0;
-                    gameState.contributors = loadedState.contributors || {};
-                    gameState.audioEnabled = loadedState.audioEnabled !== undefined ? loadedState.audioEnabled : true;
-                    gameState.masterVolume = loadedState.masterVolume || 0.4;
-                    gameState.attackQueueDetailed = loadedState.attackQueueDetailed || [];
-                    gameState.currentAttacker = loadedState.currentAttacker || gameState.playerName;
-                    gameState.gameStarted = loadedState.gameStarted || false;
-                    
-                    console.log('📂 État du jeu chargé');
-                    return true;
-                } catch (error) {
-                    console.error('❌ Erreur lors du chargement de l\'état du jeu:', error);
-                    return false;
-                }
-            }
-            return false;
-        }
-
-        // ============================================================================
         // FONCTIONS AUDIO
         // ============================================================================
 
@@ -1965,43 +1859,20 @@
 
         function initGame() {
             initAudio();
-            loadMonstersLibrary();
             initLibraryPanel();
             
-            const loaded = loadGameState();
-            
-            if (loaded && gameState.gameStarted) {
-                updateCoinsDisplay();
-                updateEnemiesCount();
-                updateAttackQueueDisplay();
-                renderEnemies();
-                renderBoss();
-                updateWinnersDisplay();
-                updateAttackQueueBar();
-                updateSpinRewardsDisplay();
-                updatePityCounterDisplay();
-                updateDetailedQueueDisplay();
-                updateSymbolsDisplay();
-                updateContributorsDisplay();
-                updateAudioButtonState();
-                
-                showNotification('📂 Partie précédente restaurée!');
-            } else {
-                createNewGame();
-                initSymbols();
-                updateSpinRewardsDisplay();
-                updatePityCounterDisplay();
-                initMonstersPanel();
-                updateContributorsDisplay();
-            }
+            createNewGame();
+            initSymbols();
+            updateSpinRewardsDisplay();
+            updatePityCounterDisplay();
+            initMonstersPanel();
+            updateContributorsDisplay();
             
             startShipMovement();
             startEnemyZoomEffect();
             initShipDragAndDrop();
             gameState.gameStarted = true;
             playSound('notification');
-            
-            saveGameState();
         }
 
         function createNewGame() {
@@ -2096,8 +1967,6 @@
             elements.playerShipContainer.style.bottom = '5px';
             elements.playerShipContainer.style.top = 'auto';
             elements.playerShipContainer.style.transform = 'translateX(-50%)';
-            
-            saveGameState();
         }
 
         // ============================================================================
@@ -2212,8 +2081,6 @@
             updateEnemiesCount();
             showNotification(`🎯 ${monsterConfig === bossConfig ? 'BOSS' : 'Monstre'} apparu!`);
             playSound('notification');
-            
-            saveGameState();
         }
 
         function spawnRandomMonster() {
@@ -2255,8 +2122,6 @@
             updateEnemiesCount();
             showNotification('🗑️ Monstre supprimé!');
             playSound('notification');
-            
-            saveGameState();
         }
 
         function clearAllMonsters() {
@@ -2462,7 +2327,6 @@
             };
             
             monstersConfig.push(newMonster);
-            saveMonstersLibrary();
             initMonstersPanel();
             refreshMonsterImages();
             showNotification('🎉 Nouveau monstre ajouté à la bibliothèque!');
@@ -2471,7 +2335,6 @@
         function updateMonsterImage(monsterIndex, newImageUrl) {
             if (monsterIndex >= 0 && monsterIndex < monstersConfig.length) {
                 monstersConfig[monsterIndex].image = newImageUrl;
-                saveMonstersLibrary();
                 refreshMonsterImages();
                 showNotification('✅ Image de monstre mise à jour!');
                 return true;
@@ -2482,7 +2345,6 @@
         function deleteMonster(index) {
             if (confirm('Êtes-vous sûr de vouloir supprimer ce monstre?')) {
                 monstersConfig.splice(index, 1);
-                saveMonstersLibrary();
                 updateExistingMonstersList();
                 refreshMonsterImages();
                 showNotification('🗑️ Monstre supprimé de la bibliothèque');
@@ -2492,7 +2354,6 @@
 
         function resetMonstersLibrary() {
             if (confirm('Êtes-vous sûr de vouloir réinitialiser la bibliothèque des monstres? Toutes les modifications seront perdues.')) {
-                localStorage.removeItem('spaceInvaderMonstersLibrary');
                 location.reload();
             }
         }
@@ -2546,7 +2407,6 @@
                             Object.assign(miniMonsterConfig, importedData.miniMonsterConfig);
                         }
                         
-                        saveMonstersLibrary();
                         initMonstersPanel();
                         refreshMonsterImages();
                         updateExistingMonstersList();
@@ -2648,8 +2508,6 @@
                 
                 shipContainer.style.transition = 'all 0.3s ease';
                 shipContainer.style.zIndex = '10';
-                
-                saveGameState();
             }
         }
 
@@ -2709,8 +2567,6 @@
             if (!gameState.isProcessingAttacks) {
                 processAttackQueue();
             }
-            
-            saveGameState();
         }
 
         function addToDetailedQueue(attackerName, attackCount) {
@@ -2866,8 +2722,6 @@
                 setTimeout(() => {
                     processAttackQueue();
                 }, 30);
-                
-                saveGameState();
             }, 300);
         }
 
@@ -3092,8 +2946,6 @@
             if (gameState.attackMode === 10) {
                 playSound('attack10', 200);
             }
-            
-            saveGameState();
         }
 
         function updateSpinRewardsDisplay() {
@@ -3120,8 +2972,6 @@
             if (coins > 0) {
                 playSound('coin', 200);
             }
-            
-            saveGameState();
         }
 
         function addContributorCoins(name, coins) {
@@ -3131,8 +2981,6 @@
             
             gameState.contributors[name] += coins;
             updateContributorsDisplay();
-            
-            saveGameState();
         }
 
         function updateWinnersDisplay() {
@@ -3196,8 +3044,6 @@
                 updateContributorsDisplay();
                 showNotification("✅ Tableau des contributeurs réinitialisé!");
                 playSound('notification');
-                
-                saveGameState();
             }
         }
 
@@ -3205,7 +3051,6 @@
             if (name && name.trim() !== '') {
                 gameState.playerName = name.trim();
                 showNotification(`👤 Nom du joueur défini: ${gameState.playerName}`);
-                saveGameState();
             }
         }
 
@@ -3297,7 +3142,6 @@
             elements.attackMode500.classList.remove('active');
             elements.shootButton.innerHTML = '<i class="fas fa-crosshairs"></i> ATTAQUER (1 coup)';
             playSound('buttonClick');
-            saveGameState();
         });
         
         elements.attackMode10.addEventListener('click', () => {
@@ -3308,7 +3152,6 @@
             elements.attackMode500.classList.remove('active');
             elements.shootButton.innerHTML = '<i class="fas fa-crosshairs"></i> ATTAQUER (10 coups)';
             playSound('buttonClick');
-            saveGameState();
         });
 
         elements.attackMode100.addEventListener('click', () => {
@@ -3319,7 +3162,6 @@
             elements.attackMode500.classList.remove('active');
             elements.shootButton.innerHTML = '<i class="fas fa-crosshairs"></i> ATTAQUER (100 coups)';
             playSound('buttonClick');
-            saveGameState();
         });
 
         elements.attackMode500.addEventListener('click', () => {
@@ -3330,7 +3172,6 @@
             elements.attackMode100.classList.remove('active');
             elements.shootButton.innerHTML = '<i class="fas fa-crosshairs"></i> ATTAQUER (500 coups)';
             playSound('buttonClick');
-            saveGameState();
         });
 
         elements.resetContributorsBtn.addEventListener('click', resetContributors);
@@ -3340,7 +3181,6 @@
         if (elements.volumeSlider) {
             elements.volumeSlider.addEventListener('input', (e) => {
                 updateVolume(e.target.value);
-                saveGameState();
             });
         }
 
@@ -3440,10 +3280,6 @@
             makeDraggable(elements.audioControls);
             makeDraggable(elements.attackQueuePanel);
             makeDraggable(elements.libraryPanel);
-        });
-
-        window.addEventListener('beforeunload', () => {
-            saveGameState();
         });
     </script>
 </body>
