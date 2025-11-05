@@ -129,7 +129,7 @@
             background: rgba(0, 0, 0, 0.7);
             border-radius: 12px;
             padding: 20px;
-            min-height: 350px;
+            min-height: 450px;
             border: 2px solid transparent;
             background-clip: padding-box;
             position: relative;
@@ -153,7 +153,7 @@
         .enemies-area {
             position: relative;
             width: 100%;
-            height: 250px;
+            height: 350px;
             border: 2px dashed rgba(255, 255, 255, 0.3);
             border-radius: 8px;
             background: rgba(30, 27, 75, 0.3);
@@ -167,16 +167,16 @@
         }
 
         .enemy-icon {
-            width: 40px;
-            height: 40px;
+            width: 60px;
+            height: 60px;
             object-fit: contain;
             transition: transform 0.3s;
             filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.5));
         }
 
         .health-bar {
-            width: 4rem;
-            height: 0.5rem;
+            width: 6rem;
+            height: 0.6rem;
             background: #4b5563;
             border-radius: 0.2rem;
             margin-top: 0.3rem;
@@ -197,16 +197,16 @@
         }
 
         .boss-icon {
-            width: 60px;
-            height: 60px;
+            width: 80px;
+            height: 80px;
             object-fit: contain;
             animation: bounce 2s infinite;
             filter: drop-shadow(0 0 5px rgba(255, 0, 0, 0.7));
         }
 
         .boss-health-bar {
-            width: 8rem;
-            height: 1rem;
+            width: 10rem;
+            height: 1.2rem;
             background: #4b5563;
             border-radius: 0.4rem;
             margin-top: 0.5rem;
@@ -231,8 +231,8 @@
         }
 
         .ship-icon {
-            width: 60px;
-            height: 60px;
+            width: 70px;
+            height: 70px;
             object-fit: contain;
             transition: transform 0.3s;
             filter: drop-shadow(0 0 5px rgba(0, 150, 255, 0.8));
@@ -1320,6 +1320,31 @@
             gap: 12px;
         }
 
+        .monster-management {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .monster-management-btn {
+            padding: 8px 15px;
+            background: linear-gradient(45deg, #8b5cf6, #6366f1);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .monster-management-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(139, 92, 246, 0.4);
+        }
+
         @media (max-width: 480px) {
             .status-bar {
                 flex-direction: column;
@@ -1461,6 +1486,18 @@
                     </div>
                 </div>
                 
+                <div class="monster-management">
+                    <button class="monster-management-btn" id="spawnRandomMonsterBtn">
+                        <i class="fas fa-plus"></i> Ajouter Monstre
+                    </button>
+                    <button class="monster-management-btn" id="removeRandomMonsterBtn">
+                        <i class="fas fa-minus"></i> Supprimer Monstre
+                    </button>
+                    <button class="monster-management-btn" id="clearAllMonstersBtn">
+                        <i class="fas fa-trash"></i> Vider Zone
+                    </button>
+                </div>
+                
                 <div class="auto-target-hint">
                     Le vaisseau cible automatiquement un ennemi aléatoire à chaque tir!
                 </div>
@@ -1595,7 +1632,7 @@
             targetedEnemy: null,
             shootAnimation: false,
             winners: [],
-            playerName: 'Joueur', // Nom par défaut
+            playerName: 'Joueur',
             attackMode: 1,
             attackQueue: 0,
             isProcessingAttacks: false,
@@ -1708,7 +1745,10 @@
             importLibraryBtn: document.getElementById('importLibraryBtn'),
             resetLibraryBtn: document.getElementById('resetLibraryBtn'),
             floatingLibraryBtn: document.getElementById('floatingLibraryBtn'),
-            libraryOverlay: document.getElementById('libraryOverlay')
+            libraryOverlay: document.getElementById('libraryOverlay'),
+            spawnRandomMonsterBtn: document.getElementById('spawnRandomMonsterBtn'),
+            removeRandomMonsterBtn: document.getElementById('removeRandomMonsterBtn'),
+            clearAllMonstersBtn: document.getElementById('clearAllMonstersBtn')
         };
 
         // ============================================================================
@@ -1762,7 +1802,7 @@
                 boss: gameState.boss,
                 coins: gameState.coins,
                 winners: gameState.winners,
-                playerName: gameState.playerName, // Sauvegarder le nom du joueur
+                playerName: gameState.playerName,
                 attackMode: gameState.attackMode,
                 attackQueue: gameState.attackQueue,
                 symbols: gameState.symbols,
@@ -1793,7 +1833,7 @@
                     gameState.boss = loadedState.boss || null;
                     gameState.coins = loadedState.coins || 0;
                     gameState.winners = loadedState.winners || [];
-                    gameState.playerName = loadedState.playerName || 'Joueur'; // Charger le nom du joueur
+                    gameState.playerName = loadedState.playerName || 'Joueur';
                     gameState.attackMode = loadedState.attackMode || 1;
                     gameState.attackQueue = loadedState.attackQueue || 0;
                     gameState.symbols = loadedState.symbols || [];
@@ -1956,15 +1996,15 @@
 
         function createNewGame() {
             const enemiesAreaRect = elements.enemiesArea.getBoundingClientRect();
-            const areaWidth = enemiesAreaRect.width - 60;
-            const areaHeight = enemiesAreaRect.height - 40;
+            const areaWidth = enemiesAreaRect.width - 80;
+            const areaHeight = enemiesAreaRect.height - 80;
             const areaLeft = 0;
             const areaTop = 0;
 
             const newEnemies = [];
-            const enemiesPerRow = 5;
+            const enemiesPerRow = 4;
             const enemySpacingX = areaWidth / enemiesPerRow;
-            const enemySpacingY = 60;
+            const enemySpacingY = 80;
             const startY = 20;
             
             let enemyIndex = 0;
@@ -1984,7 +2024,7 @@
                 const visualDamageRatio = Math.random() * 0.4 + 0.2;
                 
                 // Calculer la position avec un espacement approprié
-                const x = areaLeft + (col * enemySpacingX) + 20;
+                const x = areaLeft + (col * enemySpacingX) + 30;
                 const y = areaTop + startY + (row * enemySpacingY);
                 
                 // Vérifier si cette position chevauche un autre monstre
@@ -2011,8 +2051,8 @@
                 visualDamageRatio: 0.1,
                 reward: bossConfig.reward,
                 image: bossConfig.image,
-                x: areaLeft + (areaWidth / 2) - 25,
-                y: areaTop + areaHeight - 80,
+                x: areaLeft + (areaWidth / 2) - 40,
+                y: areaTop + areaHeight - 100,
                 alive: true,
                 isBoss: true
             };
@@ -2066,8 +2106,8 @@
                 for (const enemy of existingEnemies) {
                     const distance = Math.sqrt(Math.pow(enemy.x - newX, 2) + Math.pow(enemy.y - newY, 2));
                     
-                    // Distance minimale entre les monstres (60 pixels)
-                    if (distance < 60) {
+                    // Distance minimale entre les monstres (80 pixels)
+                    if (distance < 80) {
                         collision = true;
                         break;
                     }
@@ -2079,11 +2119,11 @@
                 
                 // Essayer une nouvelle position aléatoire
                 const enemiesAreaRect = elements.enemiesArea.getBoundingClientRect();
-                const areaWidth = enemiesAreaRect.width - 60;
-                const areaHeight = enemiesAreaRect.height - 40;
+                const areaWidth = enemiesAreaRect.width - 80;
+                const areaHeight = enemiesAreaRect.height - 80;
                 
-                newX = Math.random() * (areaWidth - 40) + 20;
-                newY = Math.random() * (areaHeight - 70) + 20;
+                newX = Math.random() * (areaWidth - 60) + 30;
+                newY = Math.random() * (areaHeight - 90) + 30;
                 
                 attempts++;
             }
@@ -2124,8 +2164,8 @@
 
         function spawnMonster(monsterConfig) {
             const enemiesAreaRect = elements.enemiesArea.getBoundingClientRect();
-            const areaWidth = enemiesAreaRect.width - 60;
-            const areaHeight = enemiesAreaRect.height - 40;
+            const areaWidth = enemiesAreaRect.width - 80;
+            const areaHeight = enemiesAreaRect.height - 80;
             const areaLeft = 0;
             const areaTop = 0;
 
@@ -2137,8 +2177,8 @@
             }
 
             // Générer une position aléatoire qui ne chevauche pas les autres monstres
-            const x = areaLeft + Math.random() * (areaWidth - 80);
-            const y = areaTop + 20 + Math.random() * (areaHeight - 70);
+            const x = areaLeft + Math.random() * (areaWidth - 100);
+            const y = areaTop + 30 + Math.random() * (areaHeight - 100);
             
             const position = findValidPosition(x, y, gameState.enemies.filter(e => e.alive));
 
@@ -2242,7 +2282,7 @@
                     enemyEl.innerHTML = `
                         <div class="enemy-content">
                             ${gameState.targetedEnemy === enemy.id ? '<i class="fas fa-crosshairs target-indicator"></i>' : ''}
-                            <img src="${enemy.image}" alt="Monstre" class="enemy-icon" onerror="this.src='https://via.placeholder.com/35/374151/9ca3af?text=?'">
+                            <img src="${enemy.image}" alt="Monstre" class="enemy-icon" onerror="this.src='https://via.placeholder.com/60/374151/9ca3af?text=?'">
                             <div class="health-bar">
                                 <div class="health-fill" style="width: ${(currentVisualHp / enemy.maxHp) * 100}%"></div>
                             </div>
@@ -2634,16 +2674,13 @@
         // ============================================================================
 
         function getCurrentAttackerName() {
-            // Si la file d'attaque détaillée n'est pas vide, prendre le nom du premier
             if (gameState.attackQueueDetailed.length > 0) {
                 return gameState.attackQueueDetailed[0].name;
             }
-            // Sinon utiliser l'attaquant courant
             return gameState.currentAttacker !== 'Prêt à attaquer' ? gameState.currentAttacker : gameState.playerName;
         }
 
         function queueAttack(userName = null) {
-            // Utiliser le nom fourni ou le nom du joueur par défaut
             const attackerName = userName || gameState.playerName;
             
             gameState.attackQueue += gameState.attackMode;
@@ -2759,7 +2796,6 @@
             setTimeout(() => {
                 const attackerName = getCurrentAttackerName();
                 
-                // Jouer le son quand un ennemi est touché
                 playSound('enemyHit', 100);
                 
                 if (randomTarget.id === 'boss') {
@@ -3034,7 +3070,6 @@
                 updateSpinRewardsDisplay();
                 updateCoinsDisplay();
                 
-                // Jouer le son des pièces quand quelqu'un gagne
                 if (spinReward > 0) {
                     playSound('coin', 200);
                 }
@@ -3044,7 +3079,6 @@
                 }
             }
             
-            // Jouer le son d'attaque de 10 si c'est une attaque de 10 coups
             if (gameState.attackMode === 10) {
                 playSound('attack10', 200);
             }
@@ -3070,7 +3104,6 @@
             };
             gameState.winners.unshift(winner);
             
-            // CORRECTION : Toujours ajouter le contributeur avec le bon nom
             addContributorCoins(name, coins);
             updateWinnersDisplay();
             
@@ -3244,7 +3277,6 @@
         
         elements.refreshImagesButton.addEventListener('click', refreshMonsterImages);
         
-        // CORRECTION : Utiliser le nom du joueur pour les attaques manuelles
         elements.shootButton.addEventListener('click', () => queueAttack());
         
         elements.attackMode1.addEventListener('click', () => {
@@ -3279,7 +3311,6 @@
 
         elements.resetContributorsBtn.addEventListener('click', resetContributors);
 
-        // Ajout du bouton pour changer le nom
         elements.changeNameButton.addEventListener('click', promptPlayerName);
 
         if (elements.volumeSlider) {
@@ -3292,6 +3323,11 @@
         if (elements.audioToggleBtn) {
             elements.audioToggleBtn.addEventListener('click', toggleAudio);
         }
+
+        // Gestion des boutons de gestion des monstres
+        elements.spawnRandomMonsterBtn.addEventListener('click', spawnRandomMonster);
+        elements.removeRandomMonsterBtn.addEventListener('click', removeRandomMonster);
+        elements.clearAllMonstersBtn.addEventListener('click', clearAllMonsters);
 
         // ============================================================================
         // DRAGGABLE PANELS
