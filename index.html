@@ -1470,7 +1470,16 @@
                                     <div class="mode-label">10 coups</div>
                                 </div>
                             </button>
-                            <button class="attack-mode" id="attackMode100" data-attack-mode="500">
+                            <button class="attack-mode" id="attackMode100" data-attack-mode="100">
+                                <div class="mode-badge">x1.8</div>
+                                <div class="mode-content">
+                                    <img src="https://i.ibb.co/C5M6DHcS/IMG-7356-Photoroom.png" alt="100" class="mode-icon">
+                                    <div class="mode-label">100 coups</div>
+                                </div>
+                            </button>
+                        </div>
+                        <div class="attack-modes-row">
+                            <button class="attack-mode" id="attackMode500" data-attack-mode="500">
                                 <div class="mode-badge">x2</div>
                                 <div class="mode-content">
                                     <img src="https://i.ibb.co/Kc4JWYkB/IMG-6231-Photoroom.png" alt="500" class="mode-icon">
@@ -1711,6 +1720,7 @@
             attackMode1: document.getElementById('attackMode1'),
             attackMode10: document.getElementById('attackMode10'),
             attackMode100: document.getElementById('attackMode100'),
+            attackMode500: document.getElementById('attackMode500'),
             queueBadge: document.getElementById('queueBadge'),
             symbolsContainer: document.getElementById('symbolsContainer'),
             spinRewardsAmount: document.getElementById('spinRewardsAmount'),
@@ -3284,6 +3294,7 @@
             elements.attackMode1.classList.add('active');
             elements.attackMode10.classList.remove('active');
             elements.attackMode100.classList.remove('active');
+            elements.attackMode500.classList.remove('active');
             elements.shootButton.innerHTML = '<i class="fas fa-crosshairs"></i> ATTAQUER (1 coup)';
             playSound('buttonClick');
             saveGameState();
@@ -3294,16 +3305,29 @@
             elements.attackMode10.classList.add('active');
             elements.attackMode1.classList.remove('active');
             elements.attackMode100.classList.remove('active');
+            elements.attackMode500.classList.remove('active');
             elements.shootButton.innerHTML = '<i class="fas fa-crosshairs"></i> ATTAQUER (10 coups)';
             playSound('buttonClick');
             saveGameState();
         });
 
         elements.attackMode100.addEventListener('click', () => {
-            gameState.attackMode = 500;
+            gameState.attackMode = 100;
             elements.attackMode100.classList.add('active');
             elements.attackMode1.classList.remove('active');
             elements.attackMode10.classList.remove('active');
+            elements.attackMode500.classList.remove('active');
+            elements.shootButton.innerHTML = '<i class="fas fa-crosshairs"></i> ATTAQUER (100 coups)';
+            playSound('buttonClick');
+            saveGameState();
+        });
+
+        elements.attackMode500.addEventListener('click', () => {
+            gameState.attackMode = 500;
+            elements.attackMode500.classList.add('active');
+            elements.attackMode1.classList.remove('active');
+            elements.attackMode10.classList.remove('active');
+            elements.attackMode100.classList.remove('active');
             elements.shootButton.innerHTML = '<i class="fas fa-crosshairs"></i> ATTAQUER (500 coups)';
             playSound('buttonClick');
             saveGameState();
@@ -3421,12 +3445,6 @@
         window.addEventListener('beforeunload', () => {
             saveGameState();
         });
-
-        setInterval(() => {
-            if (gameState.gameStarted) {
-                saveGameState();
-            }
-        }, 30000);
     </script>
 </body>
 </html>
